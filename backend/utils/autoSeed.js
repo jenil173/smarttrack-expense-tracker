@@ -5,42 +5,45 @@ const Category = require('../models/Category');
 
 const autoSeed = async () => {
     try {
-        console.log('[INFO] Checking database for existing users...');
-        const userCount = await User.countDocuments();
+        console.log('[INFO] Checking database for demo users...');
         
-        if (userCount > 0) {
-            console.log('[INFO] Database already contains data. Skipping auto-seed.');
-            return;
+        // 1. Ensure Default Categories exist
+        const categoryCount = await Category.countDocuments();
+        if (categoryCount === 0) {
+            const defaultCategories = [
+                { name: 'Food', type: 'expense', color: '#EF4444', isDefault: true },
+                { name: 'Travel', type: 'expense', color: '#3B82F6', isDefault: true },
+                { name: 'Shopping', type: 'expense', color: '#F59E0B', isDefault: true },
+                { name: 'Bills', type: 'expense', color: '#10B981', isDefault: true },
+                { name: 'Entertainment', type: 'expense', color: '#8B5CF6', isDefault: true },
+                { name: 'Health', type: 'expense', color: '#EC4899', isDefault: true },
+                { name: 'Education', type: 'expense', color: '#6366F1', isDefault: true },
+            ];
+            await Category.insertMany(defaultCategories);
+            console.log('  - Default categories created.');
         }
 
-        console.log('[INFO] No users found. Running seed script to populate demo data...');
-
-        // 1. Create Default Categories
-        const defaultCategories = [
-            { name: 'Food', type: 'expense', color: '#EF4444', isDefault: true },
-            { name: 'Travel', type: 'expense', color: '#3B82F6', isDefault: true },
-            { name: 'Shopping', type: 'expense', color: '#F59E0B', isDefault: true },
-            { name: 'Bills', type: 'expense', color: '#10B981', isDefault: true },
-            { name: 'Entertainment', type: 'expense', color: '#8B5CF6', isDefault: true },
-            { name: 'Health', type: 'expense', color: '#EC4899', isDefault: true },
-            { name: 'Education', type: 'expense', color: '#6366F1', isDefault: true },
-        ];
-        
-        await Category.insertMany(defaultCategories);
-        console.log('  - Default categories created.');
-
-        // 2. Define Demo Users
+        // 2. Define Demo Users (Matching Frontend UI hints)
         const usersData = [
-            { name: 'Admin Tracker', email: 'admin@tracker.com', password: 'admin123', role: 'admin', budget: 50000 },
-            { name: 'User One', email: 'user1@tracker.com', password: 'user123', role: 'user', budget: 30000 },
-            { name: 'User Two', email: 'user2@tracker.com', password: 'user123', role: 'user', budget: 25000 },
-            { name: 'User Three', email: 'user3@tracker.com', password: 'user123', role: 'user', budget: 40000 }
+            { name: 'Admin Tracker', email: 'admin@tracker.com', password: 'password123', role: 'admin', budget: 50000 },
+            { name: 'User One', email: 'user1@tracker.com', password: 'password123', role: 'user', budget: 30000 },
+            { name: 'User Two', email: 'user2@tracker.com', password: 'password123', role: 'user', budget: 25000 },
+            { name: 'User Three', email: 'user3@tracker.com', password: 'password123', role: 'user', budget: 40000 }
         ];
 
         const demoCategories = ['Food', 'Bills', 'Shopping', 'Travel', 'Entertainment', 'Health', 'Education'];
         const moods = ['Happy', 'Stressed', 'Neutral'];
 
         for (let userData of usersData) {
+            // Check if user already exists
+            const existingUser = await User.findOne({ email: userData.email });
+            if (existingUser) {
+                // If user exists, we don't overwrite them (preserves data if they already used it)
+                continue;
+            }
+
+            console.log(`[INFO] Demo user ${userData.email} not found. Creating...`);
+
             // Create user (triggers pre-save hook for password hashing)
             const user = await User.create({
                 name: userData.name,
@@ -53,7 +56,7 @@ const autoSeed = async () => {
 
             console.log(`  - Created demo account: ${user.email}`);
 
-            // Generate data for the last 4 months for each user
+            // Generate historical data for the last 4 months for each new demo user
             const incomes = [];
             const expenses = [];
 
@@ -115,11 +118,10 @@ const autoSeed = async () => {
             console.log(`    * Seeded ${incomes.length} incomes and ${expenses.length} expenses for ${user.email}`);
         }
 
-        console.log('[SUCCESS] Auto-seed complete. Demo environment is ready.');
+        console.log('[SUCCESS] Auto-seed process complete.');
 
     } catch (error) {
         console.error('[ERROR] Auto-seed process failed:', error.message);
-        // We don't throw here to avoid crashing the server if seeding fails
     }
 };
 
