@@ -5,11 +5,13 @@ const Category = require('../models/Category');
 
 const autoSeed = async () => {
     try {
-        console.log('[INFO] Checking database for demo users...');
+        console.log('[INFO] Starting auto-seed check...');
         
         // 1. Ensure Default Categories exist
+        console.log('[INFO] Checking categories...');
         const categoryCount = await Category.countDocuments();
         if (categoryCount === 0) {
+            console.log('[INFO] No categories found. Creating defaults...');
             const defaultCategories = [
                 { name: 'Food', type: 'expense', color: '#EF4444', isDefault: true },
                 { name: 'Travel', type: 'expense', color: '#3B82F6', isDefault: true },
@@ -20,7 +22,9 @@ const autoSeed = async () => {
                 { name: 'Education', type: 'expense', color: '#6366F1', isDefault: true },
             ];
             await Category.insertMany(defaultCategories);
-            console.log('  - Default categories created.');
+            console.log('[SUCCESS] Default categories created.');
+        } else {
+            console.log(`[INFO] Found ${categoryCount} categories. Skipping creation.`);
         }
 
         // 2. Define Demo Users (Matching Frontend UI hints)
@@ -35,14 +39,15 @@ const autoSeed = async () => {
         const moods = ['Happy', 'Stressed', 'Neutral'];
 
         for (let userData of usersData) {
+            console.log(`[INFO] Checking for demo user: ${userData.email}`);
             // Check if user already exists
             const existingUser = await User.findOne({ email: userData.email });
             if (existingUser) {
-                // If user exists, we don't overwrite them (preserves data if they already used it)
+                console.log(`[INFO] Demo user ${userData.email} already exists. Skipping.`);
                 continue;
             }
 
-            console.log(`[INFO] Demo user ${userData.email} not found. Creating...`);
+            console.log(`[INFO] Creating demo user: ${userData.email}...`);
 
             // Create user (triggers pre-save hook for password hashing)
             const user = await User.create({
@@ -54,7 +59,7 @@ const autoSeed = async () => {
                 isVerified: true 
             });
 
-            console.log(`  - Created demo account: ${user.email}`);
+            console.log(`[SUCCESS] Demo account created: ${user.email}`);
 
             // Generate historical data for the last 4 months for each new demo user
             const incomes = [];

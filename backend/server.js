@@ -68,6 +68,33 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'Server running', timestamp: new Date() });
 });
 
+// Debug route to check seeding status (Remove in final production)
+app.get('/api/debug/seed-status', async (req, res) => {
+    try {
+        const User = require('./models/User');
+        const count = await User.countDocuments();
+        const users = await User.find({}, 'email name role isVerified').limit(10);
+        res.json({ 
+            userCount: count, 
+            demoUsersFound: users.map(u => ({ email: u.email, role: u.role, isVerified: u.isVerified })),
+            timestamp: new Date() 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Debug route to manually trigger seeding
+app.get('/api/debug/force-seed', async (req, res) => {
+    try {
+        const autoSeed = require('./utils/autoSeed');
+        await autoSeed();
+        res.json({ message: 'Auto-seed process triggered manually' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/', (req, res) => {
     res.send('Smart Expense Tracker API is running...');
 });
