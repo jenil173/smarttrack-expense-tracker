@@ -42,8 +42,17 @@ const autoSeed = async () => {
             console.log(`[INFO] Checking for demo user: ${userData.email}`);
             // Check if user already exists
             const existingUser = await User.findOne({ email: userData.email });
+            
             if (existingUser) {
-                console.log(`[INFO] Demo user ${userData.email} already exists. Skipping.`);
+                // If user exists, ensure they have the correct role and name (helps if they were mistakenly created as 'user')
+                if (existingUser.role !== userData.role || existingUser.name !== userData.name) {
+                    existingUser.role = userData.role;
+                    existingUser.name = userData.name;
+                    await existingUser.save();
+                    console.log(`[INFO] Restored ${userData.role} privileges and name for: ${userData.email}`);
+                } else {
+                    console.log(`[INFO] Demo user ${userData.email} already exists with correct role. Skipping.`);
+                }
                 continue;
             }
 
