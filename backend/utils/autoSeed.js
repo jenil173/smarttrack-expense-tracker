@@ -29,15 +29,14 @@ const autoSeed = async () => {
         await Category.insertMany(defaultCategories);
         console.log('  - Default categories created.');
 
-        // 2. Create Demo User
         const demoEmail = 'admin@tracker.com';
         const user = await User.create({
             name: 'SmartTrack Demo User',
             email: demoEmail,
             password: 'password123', // Will be hashed by model middleware
+            role: 'admin',
             isVerified: true,
-            monthlyBudget: 50000,
-            role: 'user'
+            monthlyBudget: 50000
         });
         console.log(`  - Demo user created: ${demoEmail}`);
 

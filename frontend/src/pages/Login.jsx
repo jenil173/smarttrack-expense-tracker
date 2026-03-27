@@ -84,10 +84,9 @@ const Login = () => {
                     </Link>
                 </p>
 
-                {/* Demo Accounts Helper */}
                 <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-center text-gray-400">
-                    <p>Demo Admin: admin@tracker.com / admin123</p>
-                    <p>Demo User: user1@tracker.com / user123</p>
+                    <p>Demo Admin: admin@tracker.com / password123</p>
+                    <p>Demo User: user1@tracker.com / password123</p>
                 </div>
             </div>
         </div>

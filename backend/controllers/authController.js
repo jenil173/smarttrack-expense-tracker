@@ -106,16 +106,26 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log(`[AUTH] Login attempt for: ${email}`);
 
         // Check for user email
         const user = await User.findOne({ email }).select('+password');
 
-        if (user && (await user.matchPassword(password))) {
+        if (!user) {
+            console.warn(`[AUTH] Login failed: User not found (${email})`);
+            return res.status(401).json({ message: 'User does not exist' });
+        }
+
+        const isMatch = await user.matchPassword(password);
+        console.log(`[AUTH] Password match for ${email}: ${isMatch}`);
+
+        if (isMatch) {
             // 1. Email Verification Check
             // Exception: Demo accounts (hardcoded list or specific domain/check)
             const isDemoAccount = ['admin@tracker.com', 'user1@tracker.com', 'user2@tracker.com', 'user3@tracker.com'].includes(user.email);
             
             if (!user.isVerified && !isDemoAccount) {
+                console.warn(`[AUTH] Login blocked: Email not verified for ${email}`);
                 return res.status(401).json({ message: 'Please verify your email before logging in.' });
             }
 
@@ -129,13 +139,14 @@ const loginUser = async (req, res) => {
                 ipAddress: ip
             });
 
-            // Keep only last 10 entries maybe to save space?
+            // Keep only last 10 entries to save space
             if (user.loginActivity.length > 10) {
                 user.loginActivity = user.loginActivity.slice(0, 10);
             }
 
             await user.save();
 
+            console.log(`[AUTH] Login successful for: ${email}`);
             res.json({
                 _id: user.id,
                 name: user.name,
@@ -145,9 +156,11 @@ const loginUser = async (req, res) => {
                 token: generateToken(user._id)
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            console.warn(`[AUTH] Login failed: Invalid password for ${email}`);
+            res.status(401).json({ message: 'Invalid password' });
         }
     } catch (error) {
+        console.error(`[AUTH] Server error during login: ${error.message}`);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
