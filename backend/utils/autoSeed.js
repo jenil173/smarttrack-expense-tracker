@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const Expense = require('../models/Expense');
 const Income = require('../models/Income');
@@ -6,6 +5,7 @@ const Category = require('../models/Category');
 
 const autoSeed = async () => {
     try {
+        console.log('[INFO] Checking database for existing users...');
         const userCount = await User.countDocuments();
         
         if (userCount > 0) {
@@ -13,7 +13,7 @@ const autoSeed = async () => {
             return;
         }
 
-        console.log('[INFO] Empty database detected. Performing auto-seed for first user...');
+        console.log('[INFO] No users found. Running seed script to populate demo data...');
 
         // 1. Create Default Categories
         const defaultCategories = [
@@ -29,100 +29,97 @@ const autoSeed = async () => {
         await Category.insertMany(defaultCategories);
         console.log('  - Default categories created.');
 
-        const demoEmail = 'admin@tracker.com';
-        const user = await User.create({
-            name: 'SmartTrack Demo User',
-            email: demoEmail,
-            password: 'password123', // Will be hashed by model middleware
-            role: 'admin',
-            isVerified: true,
-            monthlyBudget: 50000
-        });
-        console.log(`  - Demo user created: ${demoEmail}`);
+        // 2. Define Demo Users
+        const usersData = [
+            { name: 'Admin Tracker', email: 'admin@tracker.com', password: 'admin123', role: 'admin', budget: 50000 },
+            { name: 'User One', email: 'user1@tracker.com', password: 'user123', role: 'user', budget: 30000 },
+            { name: 'User Two', email: 'user2@tracker.com', password: 'user123', role: 'user', budget: 25000 },
+            { name: 'User Three', email: 'user3@tracker.com', password: 'user123', role: 'user', budget: 40000 }
+        ];
 
-        const userId = user._id;
+        const demoCategories = ['Food', 'Bills', 'Shopping', 'Travel', 'Entertainment', 'Health', 'Education'];
+        const moods = ['Happy', 'Stressed', 'Neutral'];
 
-        // 3. Seed Incomes (last 3 months)
-        const incomes = [];
-        for (let i = 0; i < 3; i++) {
-            const date = new Date();
-            date.setMonth(date.getMonth() - i);
-            date.setDate(1); // 1st of month
-
-            incomes.push({
-                user: userId,
-                title: 'Monthly Salary',
-                amount: 65000 + Math.floor(Math.random() * 5000),
-                source: 'Salary',
-                date: new Date(date)
+        for (let userData of usersData) {
+            // Create user (triggers pre-save hook for password hashing)
+            const user = await User.create({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                role: userData.role,
+                monthlyBudget: userData.budget,
+                isVerified: true 
             });
 
-            if (Math.random() > 0.4) {
+            console.log(`  - Created demo account: ${user.email}`);
+
+            // Generate data for the last 4 months for each user
+            const incomes = [];
+            const expenses = [];
+
+            for (let m = 0; m < 4; m++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - m);
+                
+                // Monthly Salary
                 incomes.push({
-                    user: userId,
-                    title: 'Freelance Bonus',
-                    amount: 5000 + Math.floor(Math.random() * 3000),
-                    source: 'Freelance',
-                    date: new Date(date.setDate(15))
+                    user: user._id,
+                    title: 'Monthly Salary',
+                    amount: 45000 + Math.floor(Math.random() * 5000),
+                    source: 'Salary',
+                    date: new Date(date.getFullYear(), date.getMonth(), 1)
+                });
+
+                // Periodic side income
+                if (Math.random() > 0.5) {
+                    incomes.push({
+                        user: user._id,
+                        title: 'Freelance Project',
+                        amount: 5000 + Math.floor(Math.random() * 10000),
+                        source: 'Freelance',
+                        date: new Date(date.getFullYear(), date.getMonth(), 15)
+                    });
+                }
+
+                // ~10 random expenses per month
+                for (let i = 0; i < 10; i++) {
+                    const cat = demoCategories[Math.floor(Math.random() * demoCategories.length)];
+                    const day = 1 + Math.floor(Math.random() * 28);
+                    const expenseDate = new Date(date.getFullYear(), date.getMonth(), day);
+
+                    expenses.push({
+                        user: user._id,
+                        title: `${cat} Expense`,
+                        amount: 500 + Math.floor(Math.random() * 3000),
+                        category: cat,
+                        date: expenseDate,
+                        mood: moods[Math.floor(Math.random() * moods.length)],
+                        note: `Demo ${cat} transaction`
+                    });
+                }
+
+                // Monthly Rent
+                expenses.push({
+                    user: user._id,
+                    title: 'Monthly Rent',
+                    amount: 12000,
+                    category: 'Bills',
+                    date: new Date(date.getFullYear(), date.getMonth(), 5),
+                    mood: 'Neutral',
+                    note: 'Automatic rent entry'
                 });
             }
-        }
-        await Income.insertMany(incomes);
-        console.log(`  - ${incomes.length} income entries seeded.`);
 
-        // 4. Seed Expenses (last 60 days)
-        const catNames = ['Food', 'Travel', 'Shopping', 'Bills', 'Entertainment', 'Health'];
-        const moods = ['Happy', 'Neutral', 'Stressed'];
-        const titles = {
-           'Food': ['Starbucks', 'Dinner with Friends', 'Swiggy Order', 'Grocery Store', 'Pizza Hut'],
-           'Travel': ['Uber Ride', 'Petrol Refill', 'Metro Recharge', 'Auto Fare'],
-           'Shopping': ['Amazon Purchase', 'New T-shirt', 'Electronics', 'Gifts'],
-           'Bills': ['Electricity Bill', 'Water Bill', 'Internet Bill', 'Mobile Recharge'],
-           'Entertainment': ['Netflix', 'Movie Ticket', 'Bowling', 'Concert'],
-           'Health': ['Gym Membership', 'Pharmacy', 'Doctor Visit']
-        };
-
-        const expenses = [];
-        for (let i = 0; i < 50; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-            
-            const category = catNames[Math.floor(Math.random() * catNames.length)];
-            const titleList = titles[category] || ['General Expense'];
-            const title = titleList[Math.floor(Math.random() * titleList.length)];
-            
-            expenses.push({
-                user: userId,
-                title,
-                amount: Math.floor(Math.random() * 3000) + 200,
-                category,
-                date,
-                mood: moods[Math.floor(Math.random() * moods.length)],
-                note: `Automatic demo ${category} expense`
-            });
+            await Income.insertMany(incomes);
+            await Expense.insertMany(expenses);
+            console.log(`    * Seeded ${incomes.length} incomes and ${expenses.length} expenses for ${user.email}`);
         }
 
-        // Add recurring Rent
-        const today = new Date();
-        for (let i = 0; i < 2; i++) {
-            const rentDate = new Date(today.getFullYear(), today.getMonth() - i, 5);
-            expenses.push({
-                user: userId,
-                title: 'Monthly House Rent',
-                amount: 15000,
-                category: 'Bills',
-                date: rentDate,
-                mood: 'Neutral'
-            });
-        }
-
-        await Expense.insertMany(expenses);
-        console.log(`  - ${expenses.length} expense entries seeded.`);
-        console.log('[SUCCESS] Auto-seed complete.');
+        console.log('[SUCCESS] Auto-seed complete. Demo environment is ready.');
 
     } catch (error) {
-        console.error('[ERROR] Auto-seed failed:', error.message);
-        // Don't exit process, we want the server to still run even if seeding fails
+        console.error('[ERROR] Auto-seed process failed:', error.message);
+        // We don't throw here to avoid crashing the server if seeding fails
     }
 };
 
