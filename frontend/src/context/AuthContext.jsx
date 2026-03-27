@@ -17,7 +17,26 @@ export const AuthProvider = ({ children }) => {
         // Check if user is logged in
         const cachedUser = localStorage.getItem('user');
         if (cachedUser) {
-            setUser(JSON.parse(cachedUser));
+            const parsedUser = JSON.parse(cachedUser);
+            setUser(parsedUser);
+            
+            // Fetch fresh user data from server to ensure role/session is current
+            const fetchProfile = async () => {
+                try {
+                    const res = await api.get('/auth/me');
+                    if (res.data) {
+                        const updatedUser = { ...parsedUser, ...res.data };
+                        localStorage.setItem('user', JSON.stringify(updatedUser)); // Keep tokens
+                        setUser(updatedUser);
+                    }
+                } catch (err) {
+                    console.error('Session expired or profile fetch failed', err);
+                    if (err.response?.status === 401) {
+                        logout(); // Clear invalid session
+                    }
+                }
+            };
+            fetchProfile();
         }
         
         setLoading(false);
