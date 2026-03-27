@@ -17,12 +17,26 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://smarttrack-expense-tracker.vercel.app',
-        process.env.FRONTEND_URL
-    ].filter(Boolean),
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:3000',
+            'https://smarttrack-expense-tracker.vercel.app',
+            process.env.FRONTEND_URL
+        ].filter(Boolean);
+        
+        // Log the origin for debugging purposes
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[CORS] Request from origin: ${origin}`);
+        }
+
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn(`[CORS] Blocked request from origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
