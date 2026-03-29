@@ -19,6 +19,7 @@ const AdminPanel = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [recentActivity, setRecentActivity] = useState([]);
     const [filters, setFilters] = useState({ type: '', category: '' });
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         fetchAdminData();

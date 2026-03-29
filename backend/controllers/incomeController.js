@@ -101,9 +101,57 @@ const updateIncome = async (req, res) => {
     }
 };
 
+// @desc    Parse an income via Natural Language (NLP)
+// @route   POST /api/income/nlp
+// @access  Private
+const addIncomeNLP = async (req, res) => {
+    try {
+        const { text } = req.body;
+        const amountMatch = text.match(/\d+(\.\d+)?/);
+        const amount = amountMatch ? parseFloat(amountMatch[0]) : 0;
+
+        let source = 'Other';
+        const lowerText = text.toLowerCase();
+
+        // Auto Source Suggestion based on keywords
+        if (lowerText.includes('salary') || lowerText.includes('paycheck') || lowerText.includes('wage')) source = 'Salary';
+        else if (lowerText.includes('freelance') || lowerText.includes('project') || lowerText.includes('gig')) source = 'Freelance';
+        else if (lowerText.includes('invest') || lowerText.includes('dividen') || lowerText.includes('stock') || lowerText.includes('crypto')) source = 'Investment';
+        else if (lowerText.includes('business') || lowerText.includes('sale') || lowerText.includes('client')) source = 'Business';
+        else if (lowerText.includes('gift') || lowerText.includes('birthday') || lowerText.includes('present')) source = 'Gift';
+
+        if (amount === 0) {
+            return res.status(200).json({ recognized: false, message: 'Could not understand amount' });
+        }
+
+        // Clean up title
+        let title = text;
+        if (amountMatch) {
+            title = title.replace(amountMatch[0], '');
+        }
+        title = title.replace(/^(received\s+|got\s+|earned\s+)/i, '');
+        title = title.replace(/\s+(from|on|rs|rupees)\s*$/i, '');
+        title = title.replace(/\s+/g, ' ').trim();
+        if (title.length > 0) {
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+        } else {
+            title = 'Income Entry';
+        }
+
+        res.status(200).json({
+            title: title.substring(0, 50),
+            amount,
+            source
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getIncomes,
     addIncome,
     deleteIncome,
-    updateIncome
+    updateIncome,
+    addIncomeNLP
 };
