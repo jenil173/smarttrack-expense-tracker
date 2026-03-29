@@ -67,7 +67,19 @@ const IncomeForm = ({ onIncomeAdded }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                            <input required type="number" min="0" step="0.01" className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                            <div className="relative flex-1">
+                                <span className="absolute left-3 top-2.5 text-gray-400 bg-white group-focus-within:text-primary transition-colors">₹</span>
+                                <input 
+                                    required 
+                                    type="number" 
+                                    min="0" 
+                                    step="0.01" 
+                                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold text-gray-700" 
+                                    value={amount} 
+                                    onChange={(e) => setAmount(e.target.value)} 
+                                    placeholder="0.00"
+                                />
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>

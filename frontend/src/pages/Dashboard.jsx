@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import DashboardCards from '../components/DashboardCards';
 import { ExpenseDoughnutChart, TrendLineChart, MoodCategoryBarChart } from '../components/Charts';
 import SpendingHeatmap from '../components/SpendingHeatmap';
+import FinancialHealthAudit from '../components/FinancialHealthAudit';
 import api from '../services/api';
 import { AlertCircle, Brain, Recycle, Sparkles, Wand2, Calendar, Activity, PieChart } from 'lucide-react';
 import { formatCurrency } from '../utils/currencyFormatter';
@@ -178,15 +179,25 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                        <div className="lg:col-span-1">
+                            <FinancialHealthAudit 
+                                income={summary?.totalIncome} 
+                                expense={summary?.totalExpense} 
+                                balance={summary?.balance} 
+                            />
+                        </div>
+
+                        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                                 <Brain className="mr-2 text-indigo-600" size={20} />
                                 Mood vs Spending Correlation
                             </h3>
                             <MoodCategoryBarChart moodData={insights?.moodStats} />
                         </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                                 <Calendar className="mr-2 text-green-600" size={20} />
@@ -194,9 +205,7 @@ const Dashboard = () => {
                             </h3>
                             <SpendingHeatmap data={insights?.heatmap} />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                                 <span className="mr-2">🧠</span> Habit Analyzer
@@ -214,7 +223,9 @@ const Dashboard = () => {
                                 )}
                             </div>
                         </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 gap-6 mt-6">
                         <div className="lg:col-span-2 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl p-6 shadow-sm border border-indigo-100 overflow-hidden relative">
                              <Sparkles className="absolute -right-4 -top-4 text-indigo-100" size={120} />
                             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">

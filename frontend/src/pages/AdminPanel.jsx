@@ -16,6 +16,8 @@ const AdminPanel = () => {
     const [analytics, setAnalytics] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         fetchAdminData();
@@ -130,7 +132,7 @@ const AdminPanel = () => {
                         <StatCard icon={Users} label="Total Users" value={stats?.totalUsers} color="blue" />
                         <StatCard icon={DollarSign} label="Gross Income" value={formatINR(stats?.totalIncome)} color="green" />
                         <StatCard icon={Activity} label="Total Spending" value={formatINR(stats?.totalExpenses)} color="red" />
-                        <StatCard icon={TrendingUp} label="Hot Category" value={stats?.mostUsedCategory || 'N/A'} color="orange" />
+                        <StatCard icon={TrendingUp} label="Avg Savings Rate" value={`${stats?.avgSavingsRate || 0}%`} color="orange" />
                     </div>
 
                     <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8">
@@ -152,8 +154,18 @@ const AdminPanel = () => {
 
             {activeTab === 'users' && (
                 <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-8 border-b border-gray-100">
+                    <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <h3 className="text-xl font-black text-gray-800">User Management</h3>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="Search by email..." 
+                                className="pl-10 pr-4 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 text-sm font-bold w-full md:w-64"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <Activity className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                        </div>
                     </div>
                     <div className="overflow-x-auto text-sm font-bold">
                         <table className="w-full text-left">
@@ -166,8 +178,8 @@ const AdminPanel = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {users.map(u => (
-                                    <tr key={u._id} className="hover:bg-gray-50/50 transition-colors group">
+                                {users.filter(u => u.email.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+                                    <tr key={u._id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => setSelectedUser(u)}>
                                         <td className="px-8 py-5 text-gray-800">{u.email}</td>
                                         <td className="px-8 py-5">
                                             <span className={`px-3 py-1 rounded-lg text-[10px] ${u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -175,7 +187,7 @@ const AdminPanel = () => {
                                             </span>
                                         </td>
                                         <td className="px-8 py-5 text-gray-500">{new Date(u.createdAt).toLocaleDateString()}</td>
-                                        <td className="px-8 py-5 flex justify-end space-x-3">
+                                        <td className="px-8 py-5 flex justify-end space-x-3" onClick={(e) => e.stopPropagation()}>
                                             <button onClick={() => handleRoleChange(u._id, u.role, u.email)} className="p-2 text-gray-400 hover:bg-white hover:text-blue-500 rounded-lg shadow-sm transition-all"><Edit size={16} /></button>
                                             <button onClick={() => handleDeleteUser(u._id)} className="p-2 text-gray-400 hover:bg-white hover:text-red-500 rounded-lg shadow-sm transition-all"><Trash2 size={16} /></button>
                                         </td>
@@ -215,6 +227,49 @@ const AdminPanel = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* User Detail Modal */}
+            {selectedUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setSelectedUser(null)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl relative p-10 animate-in zoom-in-95 duration-300">
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">User Details</h3>
+                        <p className="text-gray-500 font-bold mb-8">{selectedUser.email}</p>
+                        
+                        <div className="grid grid-cols-2 gap-6 mb-8">
+                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Joined</p>
+                                <p className="text-sm font-black text-gray-800">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Role</p>
+                                <p className="text-sm font-black text-gray-800">{selectedUser.role.toUpperCase()}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 mb-8">
+                            <p className="text-xs font-black text-primary uppercase tracking-widest mb-4">Financial Overview</p>
+                            <div className="space-y-3">
+                                <div className="flex justify-between font-bold text-sm">
+                                    <span className="text-gray-500">Current Balance</span>
+                                    <span className="text-gray-900">{formatINR(selectedUser.balance || 0)}</span>
+                                </div>
+                                <div className="flex justify-between font-bold text-sm">
+                                    <span className="text-gray-500">Monthly Budget</span>
+                                    <span className="text-gray-900">{formatINR(selectedUser.monthlyBudget || 0)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setSelectedUser(null)}
+                            className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all"
+                        >
+                            Close Details
+                        </button>
                     </div>
                 </div>
             )}

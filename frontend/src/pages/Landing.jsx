@@ -150,16 +150,16 @@ const Landing = () => {
                             
                             <div className="grid grid-cols-3 gap-6 pt-10 border-t border-gray-100">
                                 <div>
-                                    <p className="text-3xl font-black text-gray-900">50+</p>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Components Built</p>
-                                </div>
-                                <div>
-                                    <p className="text-3xl font-black text-gray-900">100%</p>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Client Satisfaction</p>
-                                </div>
-                                <div>
                                     <p className="text-3xl font-black text-gray-900">MERN</p>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Tech Stack</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Stack Mastered</p>
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-black text-gray-900">Secure</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Architecture</p>
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-black text-gray-900">Data</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Driven Design</p>
                                 </div>
                             </div>
                         </div>
