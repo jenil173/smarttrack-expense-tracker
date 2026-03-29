@@ -30,21 +30,25 @@ const getSystemStats = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
-        const totalExpenses = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
         const totalIncome = incomeAgg.length > 0 ? incomeAgg[0].total : 0;
+        const totalExpenses = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
 
-        // Most Used Category
-        const categoryAgg = await Expense.aggregate([
-            { $group: { _id: "$category", count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 1 }
-        ]);
-        const mostUsedCategory = categoryAgg.length > 0 ? categoryAgg[0]._id : 'N/A';
+        // Average Savings Rate (Capped at 0 to prevent negative analytics as per Task 4)
+        const avgSavingsRate = totalIncome > 0 ? Math.max(0, Math.round(((totalIncome - totalExpenses) / totalIncome) * 100)) : 0;
 
-        // Avg Expense per User
-        const avgExpensePerUser = totalUsers > 0 ? (totalExpenses / totalUsers) : 0;
-
+        // Detailed Stats
         const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+        
+        // Recent Activity
+        const recentUsers = await User.find({}).select('email createdAt').sort({ createdAt: -1 }).limit(5);
+        const recentExpenses = await Expense.find({}).populate('user', 'email').sort({ createdAt: -1 }).limit(5);
+        const recentIncomes = await Income.find({}).populate('user', 'email').sort({ createdAt: -1 }).limit(5);
+
+        const recentActivity = [
+            ...recentUsers.map(u => ({ id: u._id, title: `New User: ${u.email}`, time: u.createdAt, type: 'user' })),
+            ...recentExpenses.map(e => ({ id: e._id, title: `Expense by ${e.user?.email || 'Unknown'}`, amount: e.amount, time: e.createdAt, type: 'expense' })),
+            ...recentIncomes.map(i => ({ id: i._id, title: `Income by ${i.user?.email || 'Unknown'}`, amount: i.amount, time: i.createdAt, type: 'income' }))
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
         res.status(200).json({
             users,
@@ -53,9 +57,10 @@ const getSystemStats = async (req, res) => {
                 totalExpenses,
                 totalIncome,
                 totalTransactions,
-                avgExpensePerUser,
-                mostUsedCategory
-            }
+                avgSavingsRate,
+                avgExpensePerUser: totalUsers > 0 ? (totalExpenses / totalUsers) : 0
+            },
+            recentActivity
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -67,13 +72,23 @@ const getSystemStats = async (req, res) => {
 // @access  Private/Admin
 const getTransactions = async (req, res) => {
     try {
-        const expenses = await Expense.find({}).populate('user', 'email').sort({ date: -1 });
-        const incomes = await Income.find({}).populate('user', 'email').sort({ date: -1 });
+        const { type, category } = req.query;
+        let query = {};
+        if (category) query.category = category;
 
-        const transactions = [
-            ...expenses.map(e => ({ ...e._doc, type: 'expense' })),
-            ...incomes.map(i => ({ ...i._doc, type: 'income' }))
-        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        let transactions = [];
+
+        if (!type || type === 'expense') {
+            const expenses = await Expense.find(query).populate('user', 'email').sort({ date: -1 });
+            transactions.push(...expenses.map(e => ({ ...e._doc, type: 'expense' })));
+        }
+
+        if (!type || type === 'income') {
+            const incomes = await Income.find(type === 'income' ? query : {}).populate('user', 'email').sort({ date: -1 });
+            transactions.push(...incomes.map(i => ({ ...i._doc, type: 'income' })));
+        }
+
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         res.status(200).json(transactions);
     } catch (error) {
@@ -191,11 +206,32 @@ const getSystemAnalytics = async (req, res) => {
     }
 };
 
+// @desc    Delete a transaction administratively
+// @route   DELETE /api/admin/transactions/:id
+// @access  Private/Admin
+const deleteTransaction = async (req, res) => {
+    try {
+        const { type } = req.query;
+        const Model = type === 'income' ? Income : Expense;
+        
+        const transaction = await Model.findById(req.params.id);
+        if (!transaction) {
+            return res.status(404).json({ message: 'Transaction not found' });
+        }
+
+        await transaction.deleteOne();
+        res.status(200).json({ message: 'Transaction removed from system', id: req.params.id });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getAllUsers,
     getSystemStats,
     deleteUser,
     changeUserRole,
     getTransactions,
-    getSystemAnalytics
+    getSystemAnalytics,
+    deleteTransaction
 };

@@ -25,6 +25,10 @@ const addExpense = async (req, res) => {
             return res.status(400).json({ message: 'Please provide title, amount, and category' });
         }
 
+        if (Number(amount) <= 0) {
+            return res.status(400).json({ message: 'Amount must be a positive value' });
+        }
+
         const expense = await Expense.create({
             user: req.user.id,
             title,

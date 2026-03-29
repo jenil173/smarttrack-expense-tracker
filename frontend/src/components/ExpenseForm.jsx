@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { debounce } from 'lodash';
+import { Sparkles, Wand2 } from 'lucide-react';
 
 const ExpenseForm = ({ onExpenseAdded }) => {
     const { currencySymbol } = useContext(AuthContext);
@@ -61,6 +62,7 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                 return;
             }
             try {
+                setNlpLoading(true);
                 const res = await api.post('/expenses/nlp', { text });
                 if (res.data && res.data.amount && res.data.recognized !== false) {
                     setDetectedValues(res.data);
@@ -71,6 +73,8 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                 }
             } catch (error) {
                 console.error('NLP Error:', error);
+            } finally {
+                setNlpLoading(false);
             }
         }, 1000),
         []
@@ -93,36 +97,66 @@ const ExpenseForm = ({ onExpenseAdded }) => {
 
     return (
         <div className="space-y-6">
-            {/* Smart Entry Suggestion */}
-            {nlpText && (
-                <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">Smart Detection</p>
-                            <p className="text-sm text-gray-700">
-                                Detected: <span className="font-bold text-gray-900">{detectedValues?.category || '...'}</span> for <span className="font-bold text-gray-900">{currencySymbol}{detectedValues?.amount || '0'}</span>
-                            </p>
-                        </div>
+            {/* Smart Entry Section */}
+            <div className="bg-gradient-to-br from-primary/10 to-purple-50 p-6 rounded-[2rem] border border-primary/20 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <Wand2 size={80} className="text-primary" />
+                </div>
+                <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center relative z-10">
+                    <Sparkles className="mr-2 text-primary" size={20} />
+                    Smart Entry
+                </h3>
+                <p className="text-xs font-bold text-gray-500 mb-4 relative z-10 uppercase tracking-widest">Type naturally: "Spent 500 on groceries"</p>
+                <div className="flex flex-col md:flex-row gap-3 relative z-10">
+                    <input 
+                        type="text" 
+                        className="flex-1 px-4 py-3 rounded-xl border border-white bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold text-gray-700 placeholder:text-gray-400"
+                        placeholder="What did you spend on?"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                    />
+                    {detectedValues && (
                         <button 
                             type="button"
                             onClick={applySmartEntry}
-                            className="bg-primary hover:bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm"
+                            className="bg-primary hover:bg-purple-600 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg flex items-center justify-center animate-in zoom-in duration-300"
                         >
-                            Apply
+                            <Sparkles size={16} className="mr-2" /> Apply Magic
                         </button>
-                    </div>
+                    )}
                 </div>
-            )}
+
+                {nlpLoading && (
+                    <div className="mt-3 flex items-center text-xs font-bold text-primary animate-pulse">
+                        <div className="h-1.5 w-1.5 bg-primary rounded-full mr-2"></div>
+                        Analyzing your input...
+                    </div>
+                )}
+
+                {detectedValues && !nlpLoading && (
+                    <div className="mt-4 p-3 bg-white/60 backdrop-blur-md rounded-xl border border-white/50 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Detected</p>
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center text-sm font-black text-gray-800">
+                                <span className="text-gray-400 mr-1">Amount:</span> ₹{detectedValues.amount}
+                            </div>
+                            <div className="flex items-center text-sm font-black text-gray-800">
+                                <span className="text-gray-400 mr-1">Category:</span> {detectedValues.category}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {warning && (
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl">
-                    <p className="text-sm font-medium text-orange-800">{warning}</p>
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl animate-in slide-in-from-left duration-300">
+                    <p className="text-sm font-black text-orange-800">{warning}</p>
                 </div>
             )}
 
             {successMessage && (
-                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl">
-                    <p className="text-sm font-medium text-green-800">{successMessage}</p>
+                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl animate-in slide-in-from-left duration-300">
+                    <p className="text-sm font-black text-green-800">{successMessage}</p>
                 </div>
             )}
 

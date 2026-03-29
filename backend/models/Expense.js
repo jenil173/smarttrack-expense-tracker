@@ -14,7 +14,8 @@ const ExpenseSchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: [true, 'Please add a positive or negative number']
+        required: [true, 'Please add a positive number'],
+        min: [0.01, 'Amount must be a positive value']
     },
     category: {
         type: String,

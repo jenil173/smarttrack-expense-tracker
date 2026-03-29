@@ -17,21 +17,24 @@ const AdminPanel = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [filters, setFilters] = useState({ type: '', category: '' });
 
     useEffect(() => {
         fetchAdminData();
-    }, []);
+    }, [filters]);
 
     const fetchAdminData = async () => {
         try {
+            const queryParams = new URLSearchParams(filters).toString();
             const [statsRes, transRes, analyticsRes, usersRes] = await Promise.all([
                 api.get('/admin/system-stats'),
-                api.get('/admin/all-transactions'),
+                api.get(`/admin/all-transactions?${queryParams}`),
                 api.get('/admin/analytics'),
                 api.get('/admin/users')
             ]);
             setStats(statsRes.data.stats);
+            setRecentActivity(statsRes.data.recentActivity);
             setTransactions(transRes.data);
             setAnalytics(analyticsRes.data);
             setUsers(usersRes.data);
@@ -40,6 +43,18 @@ const AdminPanel = () => {
             toast.error('Failed to fetch admin data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteTransaction = async (id, type) => {
+        if (window.confirm("Delete this transaction from the system? This action is permanent.")) {
+            try {
+                await api.delete(`/admin/transactions/${id}?type=${type}`);
+                toast.success('Transaction removed');
+                fetchAdminData();
+            } catch (error) {
+                toast.error('Failed to delete transaction');
+            }
         }
     };
 
@@ -105,51 +120,77 @@ const AdminPanel = () => {
     return (
         <Layout title="Admin Command Center">
             {/* Tabs */}
-            <div className="flex space-x-4 mb-8 bg-gray-100/50 p-1.5 rounded-2xl w-fit">
+            <div className="flex space-x-2 md:space-x-4 mb-8 bg-gray-100/50 p-1.5 rounded-2xl w-fit overflow-x-auto">
                 <button
                     onClick={() => setActiveTab('overview')}
-                    className={`flex items-center px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex items-center px-4 md:px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 font-bold'}`}
                 >
                     <LayoutDashboard size={18} className="mr-2" /> Overview
                 </button>
                 <button
                     onClick={() => setActiveTab('users')}
-                    className={`flex items-center px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex items-center px-4 md:px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 font-bold'}`}
                 >
                     <Users size={18} className="mr-2" /> Users
                 </button>
                 <button
                     onClick={() => setActiveTab('transactions')}
-                    className={`flex items-center px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'transactions' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex items-center px-4 md:px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === 'transactions' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 font-bold'}`}
                 >
                     <List size={18} className="mr-2" /> Transactions
+                </button>
+                <button
+                    onClick={() => setActiveTab('analytics')}
+                    className={`flex items-center px-4 md:px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === 'analytics' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 font-bold'}`}
+                >
+                    <BarChart3 size={18} className="mr-2" /> System Growth
                 </button>
             </div>
 
             {activeTab === 'overview' && (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <StatCard icon={Users} label="Total Users" value={stats?.totalUsers} color="blue" />
-                        <StatCard icon={DollarSign} label="Gross Income" value={formatINR(stats?.totalIncome)} color="green" />
-                        <StatCard icon={Activity} label="Total Spending" value={formatINR(stats?.totalExpenses)} color="red" />
-                        <StatCard icon={TrendingUp} label="Avg Savings Rate" value={`${stats?.avgSavingsRate || 0}%`} color="orange" />
-                    </div>
-
-                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-xl font-black text-gray-800 flex items-center">
-                                <BarChart3 size={24} className="mr-3 text-primary" /> System Growth Trends
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <StatCard icon={Users} label="Total Users" value={stats?.totalUsers} color="blue" />
+                            <StatCard icon={TrendingUp} label="Avg Savings Rate" value={`${stats?.avgSavingsRate || 0}%`} color="orange" />
+                            <StatCard icon={DollarSign} label="Gross Income" value={formatINR(stats?.totalIncome)} color="green" />
+                            <StatCard icon={Activity} label="Total Spending" value={formatINR(stats?.totalExpenses)} color="red" />
+                        </div>
+                        
+                        <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+                            <h3 className="text-xl font-black text-gray-800 mb-6 flex items-center">
+                                <Activity size={24} className="mr-3 text-primary" /> System Performance
                             </h3>
-                            <div className="flex items-center space-x-4">
-                                <div className="flex items-center"><div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div> <span className="text-xs font-bold text-gray-500">Income</span></div>
-                                <div className="flex items-center"><div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div> <span className="text-xs font-bold text-gray-500">Expense</span></div>
+                            <div className="h-64">
+                                <Line data={chartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }} />
                             </div>
                         </div>
-                        <div className="h-96">
-                            <Line data={chartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } }} />
+                    </div>
+
+                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col h-fit">
+                        <h3 className="text-xl font-black text-gray-800 mb-6 flex items-center">
+                            <BarChart3 size={24} className="mr-3 text-primary" /> Activity Feed
+                        </h3>
+                        <div className="space-y-6">
+                            {recentActivity.map((activity, idx) => (
+                                <div key={idx} className="flex items-start group">
+                                    <div className={`mt-1 h-3 w-3 rounded-full shrink-0 mr-4 ${activity.type === 'user' ? 'bg-blue-500' : activity.type === 'expense' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                                    <div className="flex-1 border-b border-gray-50 pb-4 group-last:border-0">
+                                        <p className="text-sm font-black text-gray-800">{activity.title}</p>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase">{new Date(activity.time).toLocaleString()}</p>
+                                            {activity.amount && (
+                                                <span className={`text-xs font-black ${activity.type === 'expense' ? 'text-red-500' : 'text-green-500'}`}>
+                                                    {activity.type === 'expense' ? '-' : '+'}{formatINR(activity.amount)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </>
+                </div>
             )}
 
             {activeTab === 'users' && (
@@ -171,10 +212,10 @@ const AdminPanel = () => {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400">
                                 <tr>
-                                    <th className="px-8 py-5">EMAIL</th>
-                                    <th className="px-8 py-5">ROLE</th>
-                                    <th className="px-8 py-5">JOINED</th>
-                                    <th className="px-8 py-5 text-right">ACTIONS</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase">EMAIL</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase">ROLE</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase">JOINED</th>
+                                    <th className="px-8 py-5 text-right text-[10px] tracking-widest uppercase">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -186,10 +227,10 @@ const AdminPanel = () => {
                                                 {u.role.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-5 text-gray-500">{new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td className="px-8 py-5 text-gray-400 font-bold">{new Date(u.createdAt).toLocaleDateString()}</td>
                                         <td className="px-8 py-5 flex justify-end space-x-3" onClick={(e) => e.stopPropagation()}>
-                                            <button onClick={() => handleRoleChange(u._id, u.role, u.email)} className="p-2 text-gray-400 hover:bg-white hover:text-blue-500 rounded-lg shadow-sm transition-all"><Edit size={16} /></button>
-                                            <button onClick={() => handleDeleteUser(u._id)} className="p-2 text-gray-400 hover:bg-white hover:text-red-500 rounded-lg shadow-sm transition-all"><Trash2 size={16} /></button>
+                                            <button onClick={() => handleRoleChange(u._id, u.role, u.email)} className="p-2.5 text-gray-400 hover:bg-white hover:text-blue-500 rounded-xl shadow-sm transition-all border border-transparent hover:border-blue-100"><Edit size={16} /></button>
+                                            <button onClick={() => handleDeleteUser(u._id)} className="p-2.5 text-gray-400 hover:bg-white hover:text-red-500 rounded-xl shadow-sm transition-all border border-transparent hover:border-red-100"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -201,27 +242,64 @@ const AdminPanel = () => {
 
             {activeTab === 'transactions' && (
                 <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-8 border-b border-gray-100">
+                    <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <h3 className="text-xl font-black text-gray-800">Global Transactions</h3>
+                        <div className="flex flex-wrap gap-4">
+                            <select 
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-black outline-none focus:ring-2 focus:ring-primary/20"
+                                value={filters.type}
+                                onChange={(e) => setFilters({...filters, type: e.target.value})}
+                            >
+                                <option value="">All Types</option>
+                                <option value="income">Income Only</option>
+                                <option value="expense">Expense Only</option>
+                            </select>
+                            <select 
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-black outline-none focus:ring-2 focus:ring-primary/20"
+                                value={filters.category}
+                                onChange={(e) => setFilters({...filters, category: e.target.value})}
+                            >
+                                <option value="">All Categories</option>
+                                <option value="Food">Food</option>
+                                <option value="Travel">Travel</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Bills">Bills</option>
+                                <option value="Entertainment">Entertainment</option>
+                            </select>
+                        </div>
                     </div>
                     <div className="overflow-x-auto text-sm font-bold">
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400">
                                 <tr>
-                                    <th className="px-8 py-5">USER</th>
-                                    <th className="px-8 py-5">TITLE</th>
-                                    <th className="px-8 py-5">CATEGORY</th>
-                                    <th className="px-8 py-5 text-right">AMOUNT</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase">USER</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase">TITLE</th>
+                                    <th className="px-8 py-5 text-[10px] tracking-widest uppercase text-center">CATEGORY</th>
+                                    <th className="px-8 py-5 text-right text-[10px] tracking-widest uppercase">AMOUNT</th>
+                                    <th className="px-8 py-5 text-right text-[10px] tracking-widest uppercase">ACTION</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {transactions.map(t => (
                                     <tr key={t._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-8 py-5 text-gray-500">{t.user?.email || 'Unknown'}</td>
+                                        <td className="px-8 py-5 text-gray-500 font-bold">{t.user?.email || 'System'}</td>
                                         <td className="px-8 py-5 text-gray-800">{t.title}</td>
-                                        <td className="px-8 py-5"><span className="bg-gray-100 px-3 py-1 rounded-lg text-xs">{t.category || 'Income'}</span></td>
-                                        <td className={`px-8 py-5 text-right font-black ${t.type === 'expense' ? 'text-red-500' : 'text-green-500'}`}>
-                                            {t.type === 'expense' ? '-' : '+'}{formatINR(t.amount)}
+                                        <td className="px-8 py-5 text-center">
+                                            <span className="bg-gray-100 px-3 py-1 rounded-lg text-[10px] uppercase font-black text-gray-500">
+                                                {t.category || t.source || 'Other'}
+                                            </span>
+                                        </td>
+                                        <td className={`px-8 py-5 text-right font-black ${t.type === 'expense' || !t.source ? 'text-red-500' : 'text-green-500'}`}>
+                                            {(t.type === 'expense' || !t.source) ? '-' : '+'}{formatINR(t.amount)}
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            <button 
+                                                onClick={() => handleDeleteTransaction(t._id, (t.type === 'expense' || !t.source) ? 'expense' : 'income')}
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                title="Delete suspicious transaction"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -231,42 +309,77 @@ const AdminPanel = () => {
                 </div>
             )}
 
+            {activeTab === 'analytics' && (
+                <div className="space-y-8">
+                    <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                        <h3 className="text-2xl font-black text-gray-900 mb-8 flex items-center">
+                            <TrendingUp size={28} className="mr-4 text-primary" /> System Growth & Adoption
+                        </h3>
+                        <div className="h-[500px]">
+                            <Line 
+                                data={chartData} 
+                                options={{ 
+                                    maintainAspectRatio: false, 
+                                    plugins: { 
+                                        legend: { 
+                                            position: 'top',
+                                            labels: { font: { weight: 'bold', size: 12 } }
+                                        } 
+                                    }, 
+                                    scales: { 
+                                        y: { grid: { color: '#f3f4f6' }, ticks: { font: { weight: 'bold' }, callback: (v) => formatINR(v) } }, 
+                                        x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } 
+                                    } 
+                                }} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* User Detail Modal */}
             {selectedUser && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setSelectedUser(null)}></div>
+                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm shadow-inner" onClick={() => setSelectedUser(null)}></div>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl relative p-10 animate-in zoom-in-95 duration-300">
-                        <h3 className="text-2xl font-black text-gray-900 mb-2">User Details</h3>
-                        <p className="text-gray-500 font-bold mb-8">{selectedUser.email}</p>
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-2xl font-black text-gray-900 mb-1">User Details</h3>
+                                <p className="text-gray-500 font-bold">{selectedUser.email}</p>
+                            </div>
+                            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest ${selectedUser.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                                {selectedUser.role.toUpperCase()}
+                            </span>
+                        </div>
                         
                         <div className="grid grid-cols-2 gap-6 mb-8">
-                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Joined</p>
                                 <p className="text-sm font-black text-gray-800">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
                             </div>
-                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Role</p>
-                                <p className="text-sm font-black text-gray-800">{selectedUser.role.toUpperCase()}</p>
+                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Plan</p>
+                                <p className="text-sm font-black text-gray-800">FREE TIER</p>
                             </div>
                         </div>
 
-                        <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 mb-8">
-                            <p className="text-xs font-black text-primary uppercase tracking-widest mb-4">Financial Overview</p>
-                            <div className="space-y-3">
+                        <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 mb-8">
+                            <p className="text-xs font-black text-primary uppercase tracking-widest mb-4">Financial Pulse</p>
+                            <div className="space-y-4">
                                 <div className="flex justify-between font-bold text-sm">
-                                    <span className="text-gray-500">Current Balance</span>
-                                    <span className="text-gray-900">{formatINR(selectedUser.balance || 0)}</span>
+                                    <span className="text-gray-500">Manual Budget</span>
+                                    <span className="text-gray-900 font-black">{formatINR(selectedUser.monthlyBudget || 0)}</span>
                                 </div>
                                 <div className="flex justify-between font-bold text-sm">
-                                    <span className="text-gray-500">Monthly Budget</span>
-                                    <span className="text-gray-900">{formatINR(selectedUser.monthlyBudget || 0)}</span>
+                                    <span className="text-gray-500">Transactions</span>
+                                    <span className="text-gray-900 font-black">--</span>
                                 </div>
                             </div>
                         </div>
 
                         <button 
                             onClick={() => setSelectedUser(null)}
-                            className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all"
+                            className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all shadow-lg active:scale-95"
                         >
                             Close Details
                         </button>

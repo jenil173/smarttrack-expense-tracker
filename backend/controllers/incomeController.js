@@ -23,6 +23,10 @@ const addIncome = async (req, res) => {
             return res.status(400).json({ message: 'Please provide title and amount' });
         }
 
+        if (Number(amount) <= 0) {
+            return res.status(400).json({ message: 'Amount must be a positive value' });
+        }
+
         const income = await Income.create({
             user: req.user.id,
             title,

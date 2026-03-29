@@ -14,7 +14,8 @@ const IncomeSchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: [true, 'Please add an amount']
+        required: [true, 'Please add a positive number'],
+        min: [0.01, 'Amount must be a positive value']
     },
     date: {
         type: Date,
