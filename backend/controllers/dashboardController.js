@@ -36,15 +36,7 @@ const getAnalytics = async (req, res) => {
             { $group: { _id: "$category", amount: { $sum: "$amount" } } }
         ]);
 
-        // Auto-seed if empty
-        if (categoryExpenses.length === 0) {
-            await seedDemoData(req.user.id);
-            // Re-fetch category breakdown after seeding
-            categoryExpenses = await Expense.aggregate([
-                { $match: { user: userId } },
-                { $group: { _id: "$category", amount: { $sum: "$amount" } } }
-            ]);
-        }
+        // Auto-seed REMOVED - User should start with empty dashboard
 
         // 2. Monthly Trends (Income vs Expense)
         const monthlyExpenses = await Expense.aggregate([
@@ -167,11 +159,16 @@ const getAdvancedInsights = async (req, res) => {
         const expenses = await Expense.find({ user: userId });
         const incomes = await Income.find({ user: userId });
 
-        if (expenses.length === 0 && incomes.length === 0) {
+        if (expenses.length < 5) {
             return res.status(200).json({
                 habits: [],
-                story: "Start adding your transactions to see your financial story!",
-                recurring: []
+                story: expenses.length > 0 
+                    ? "Your financial story is being written. Add a few more transactions to unlock insights!"
+                    : "Start adding your transactions to see your financial story!",
+                recurring: [],
+                moodStats: { Happy: 0, Stressed: 0, Neutral: 0 },
+                heatmap: {},
+                needsMoreData: true
             });
         }
 

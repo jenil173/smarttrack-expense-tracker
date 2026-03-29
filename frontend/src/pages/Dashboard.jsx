@@ -151,13 +151,16 @@ const Dashboard = () => {
 
             {/* Analytics Grid */}
             {!hasData ? (
-                <div className="bg-white rounded-3xl p-12 shadow-sm border border-dashed border-gray-200 text-center flex flex-col items-center justify-center">
-                    <div className="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <Sparkles size={40} className="text-gray-300" />
+                <div className="bg-white rounded-3xl p-12 shadow-sm border border-dashed border-gray-200 text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <div className="h-24 w-24 bg-primary/5 rounded-full flex items-center justify-center mb-8 animate-pulse">
+                        <Sparkles size={48} className="text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Your Dashboard is Waiting</h3>
-                    <p className="text-gray-500 max-w-sm mb-8">Start tracking your expenses to unlock financial insights.</p>
-                    <Link to="/expenses" className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">Add Your First Entry</Link>
+                    <h3 className="text-2xl font-black text-gray-800 mb-3 tracking-tight">Your Financial Journey Starts Here</h3>
+                    <p className="text-gray-500 max-w-sm mb-10 leading-relaxed font-medium">Add your first income or expense entry to unlock personalized charts, spending habits, and AI-driven insights.</p>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Link to="/income" className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-green-700 transition-all shadow-lg hover:shadow-green-200 flex items-center justify-center">Add Income</Link>
+                        <Link to="/expenses" className="bg-primary text-white px-10 py-4 rounded-2xl font-black hover:bg-purple-700 transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center">Add Expense</Link>
+                    </div>
                 </div>
             ) : (
                 <>
@@ -218,6 +221,11 @@ const Dashboard = () => {
                                             <p className="text-sm text-blue-800">{h}</p>
                                         </div>
                                     ))
+                                ) : insights?.needsMoreData ? (
+                                    <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <Activity className="text-gray-300 mb-2" size={32} />
+                                        <p className="text-gray-500 text-sm font-bold text-center">Add at least 5 transactions to see spending habits</p>
+                                    </div>
                                 ) : (
                                     <p className="text-gray-400 text-sm italic">Tracking more data to generate tips...</p>
                                 )}

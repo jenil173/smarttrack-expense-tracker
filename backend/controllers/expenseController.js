@@ -39,6 +39,8 @@ const addExpense = async (req, res) => {
             mood: mood || 'Neutral'
         });
 
+        console.log(`[EXPENSE] Created: ₹${amount} for ${req.user.email} (Category: ${category})`);
+
         // Create standard 'Expense Added' notification
         await Notification.create({
             user: req.user.id,
@@ -136,7 +138,7 @@ const deleteExpense = async (req, res) => {
         }
 
         await expense.deleteOne();
-
+        console.log(`[EXPENSE] Deleted: ID ${req.params.id} for user ${req.user.id}`);
         res.status(200).json({ id: req.params.id });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });

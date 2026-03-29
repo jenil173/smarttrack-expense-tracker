@@ -46,6 +46,8 @@ const registerUser = async (req, res) => {
             isVerified: bypassVerification ? true : false
         });
 
+        console.log(`[AUTH] User register attempt: ${email} (Bypass: ${bypassVerification}, Verified: ${user.isVerified})`);
+
         if (user) {
             // 5. Send verification email
             const backendUrl = process.env.NODE_ENV === 'production' 
@@ -68,8 +70,9 @@ const registerUser = async (req, res) => {
                         subject: 'SmartTrack - Verify Your Email',
                         html: message
                     });
+                    console.log(`[SUCCESS] Verification email sent to: ${user.email}`);
                 } catch (err) {
-                    console.error('[ERROR] Verification email failed:', err.message);
+                    console.error(`[ERROR] Verification email failed for ${user.email}:`, err.message);
                     return res.status(500).json({ 
                         message: 'User created but unable to send verification email. Please try again later.',
                         error: err.message 
@@ -183,6 +186,8 @@ const verifyEmail = async (req, res) => {
         user.verificationToken = null; // Set to null as requested
         user.verificationTokenExpires = null;
         await user.save();
+
+        console.log(`[SUCCESS] User verified email: ${user.email}`);
 
         // Send a success HTML page or redirect
         res.send(`

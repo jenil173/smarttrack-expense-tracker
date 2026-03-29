@@ -109,8 +109,10 @@ const emailReport = async (req, res) => {
         const user = await User.findById(req.user.id);
         const data = await getReportData(req.user.id);
 
+        console.log(`[REPORTS] Generating PDF Report for: ${user.email}`);
         // Generate PDF Buffer (res is omitted)
         const pdfBuffer = await generatePDFReport(user, data);
+        console.log(`[SUCCESS] PDF Buffer generated (Size: ${pdfBuffer.length} bytes)`);
 
         const htmlContent = `
             <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
@@ -144,10 +146,14 @@ const emailReport = async (req, res) => {
         });
 
         if (sent) {
+            console.log(`[SUCCESS] Financial report emailed successfully to: ${user.email}`);
             res.status(200).json({ message: 'Report sent to your email successfully.' });
+        } else {
+            console.warn(`[WARNING] Email dispatch returned false for: ${user.email}`);
+            res.status(500).json({ message: 'Could not send email. Please check server logs.' });
         }
     } catch (error) {
-        console.error('Email Report Error:', error);
+        console.error(`[ERROR] Email Report Process failed for ${req.user.id}:`, error.message);
         res.status(500).json({ message: 'Server Error emailing report', error: error.message });
     }
 };

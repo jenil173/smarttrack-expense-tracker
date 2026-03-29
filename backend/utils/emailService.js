@@ -19,6 +19,8 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
             }
         });
 
+        console.log(`[EMAIL] Attempting to send email to: ${to} (Subject: ${subject})`);
+        
         const info = await transporter.sendMail({
             from: process.env.EMAIL_FROM || `"SmartTrack" <${process.env.EMAIL_USER || 'no-reply@smarttrack.com'}>`,
             to,
@@ -27,10 +29,13 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
             attachments
         });
 
-        console.log("Email sent successfully: %s", info.messageId);
+        console.log(`[SUCCESS] Email sent successfully: ${info.messageId}`);
         return true;
     } catch (error) {
-        console.error("Email Delivery Failed:", error.message);
+        console.error(`[ERROR] Email Delivery Failed to ${to}:`, error.message);
+        if (error.code === 'EAUTH') {
+            console.error('[ERROR] Gmail Authentication Failed. Please check if EMAIL_PASS is a valid App Password.');
+        }
         return false;
     }
 

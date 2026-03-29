@@ -7,10 +7,14 @@ const connectDB = require('./config/db');
 dotenv.config();
 
 // Connect to database
-const autoSeed = require('./utils/autoSeed');
 connectDB().then(() => {
-    // Run auto-seed check
-    autoSeed();
+    // Run auto-seed check only if explicitly requested for development/demo
+    if (process.env.SEED_DEMO_DATA === 'true') {
+        const autoSeed = require('./utils/autoSeed');
+        autoSeed();
+    } else {
+        console.log('[INFO] Skipping auto-seed (Set SEED_DEMO_DATA=true to enable)');
+    }
 });
 
 const app = express();

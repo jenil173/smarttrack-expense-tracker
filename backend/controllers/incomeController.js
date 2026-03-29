@@ -36,6 +36,8 @@ const addIncome = async (req, res) => {
             note
         });
 
+        console.log(`[INCOME] Created: ₹${amount} for ${req.user.email} (Source: ${source})`);
+
         const Notification = require('../models/Notification');
         await Notification.create({
             user: req.user.id,
@@ -67,7 +69,7 @@ const deleteIncome = async (req, res) => {
         }
 
         await income.deleteOne();
-
+        console.log(`[INCOME] Deleted: ID ${req.params.id} for user ${req.user.id}`);
         res.status(200).json({ id: req.params.id });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
