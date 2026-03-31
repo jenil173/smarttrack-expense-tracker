@@ -18,7 +18,7 @@ const getChallenges = async (req, res) => {
 // @access  Private
 const createChallenge = async (req, res) => {
     try {
-        const { title, description, type, targetAmount, endDate } = req.body;
+        const { title, description, type, targetAmount, endDate, startDate } = req.body;
 
         if (!title || !endDate) {
             return res.status(400).json({ message: 'Please provide title and end date' });
@@ -30,6 +30,7 @@ const createChallenge = async (req, res) => {
             description,
             type,
             targetAmount,
+            startDate: startDate || Date.now(), // Use provided startDate or default to now
             endDate
         });
 
@@ -56,7 +57,6 @@ const updateChallengeProgress = async (req, res) => {
 
         // Logic to calculate progress based on type
         if (challenge.type === 'Savings') {
-            // For savings, we could look at total income - total expense since start
             const expenses = await Expense.find({
                 user: req.user.id,
                 date: { $gte: challenge.startDate, $lte: new Date() }
@@ -71,7 +71,6 @@ const updateChallengeProgress = async (req, res) => {
             const totalEarned = incomes.reduce((a, b) => a + b.amount, 0);
             challenge.currentAmount = totalEarned - totalSpent;
         } else if (challenge.type === 'No Shopping') {
-            // Check if any shopping expenses occurred
             const shoppingExpenses = await Expense.find({
                 user: req.user.id,
                 category: 'Shopping',
@@ -82,22 +81,32 @@ const updateChallengeProgress = async (req, res) => {
             }
         }
 
-        // Check if completed
-        if (challenge.status === 'active') {
+        // Check completion status
+        const now = new Date();
+        const endOfDay = new Date(challenge.endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Logic to update status
+        if (now <= endOfDay) {
+            // Still in progress - can become 'active' or 'completed'
             if (challenge.type === 'Savings' && challenge.currentAmount >= challenge.targetAmount) {
                 challenge.status = 'completed';
-            } else if (new Date() > new Date(challenge.endDate)) {
-                if (challenge.type === 'Savings' && challenge.currentAmount < challenge.targetAmount) {
-                    challenge.status = 'failed';
-                } else {
-                    challenge.status = 'completed'; // For No Shopping if no failure till end
-                }
+            } else {
+                challenge.status = 'active'; // This lets 'FAILED' records recover if the user clicks Update
+            }
+        } else {
+            // Time has definitely passed
+            if (challenge.type === 'Savings' && challenge.currentAmount < challenge.targetAmount) {
+                challenge.status = 'failed';
+            } else {
+                challenge.status = 'completed'; // No Shopping success
             }
         }
 
         await challenge.save();
         res.status(200).json(challenge);
     } catch (error) {
+        console.error('Update Progress Error:', error);
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };

@@ -14,6 +14,7 @@ const Challenges = () => {
         description: '',
         type: 'Savings',
         targetAmount: '',
+        startDate: new Date().toISOString().split('T')[0],
         endDate: ''
     });
 
@@ -122,6 +123,16 @@ const Challenges = () => {
                                 />
                             </div>
                         )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <input 
+                                required 
+                                type="date" 
+                                className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" 
+                                value={formData.startDate}
+                                onChange={e => setFormData({...formData, startDate: e.target.value})}
+                            />
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                             <input 
