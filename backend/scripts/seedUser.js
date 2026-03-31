@@ -89,7 +89,6 @@ const seedUser = async () => {
         }
 
         // 5. Specific Stressed Spending (Triggers Mood Analysis)
-        // Stressed average > Happy average
         for (let i = 0; i < 5; i++) {
             const date = new Date();
             date.setDate(now.getDate() - (i * 3));
@@ -104,14 +103,44 @@ const seedUser = async () => {
             });
         }
 
+        // 6. ADD TRANSACTIONS FOR TODAY (Ensures same-day challenges work)
+        incomes.push({ user: userId, title: 'Mega Today Bonus', amount: 20000, category: 'Other', date: new Date() });
+        entries.push({ user: userId, title: 'Today Lunch', amount: 450, category: 'Food', date: new Date(), mood: 'Happy' });
+
         await Income.insertMany(incomes);
         await Expense.insertMany(entries);
 
-        console.log(`Successfully seeded ${entries.length} expenses and ${incomes.length} incomes for ${email}`);
-        console.log('--- READY FOR MANUAL TESTING ---');
-        console.log('1. Habit Analyzer will show weekend/late-month patterns.');
-        console.log('2. Mood Analysis will highlight stressed spending.');
-        console.log('3. Recurring list will show Rent, Netflix, and Internet.');
+        // 7. PRE-CREATE CHALLENGES (To show expected output)
+        const Challenge = require('../models/Challenge');
+        await Challenge.deleteMany({ user: userId });
+        
+        await Challenge.create([
+            {
+                user: userId,
+                title: "🏆 Target Achieved",
+                description: "This challenge was automatically completed by the system.",
+                targetAmount: 2000,
+                currentAmount: 4550, 
+                type: 'Savings',
+                startDate: new Date(now.getFullYear(), now.getMonth(), 1),
+                endDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+                status: 'completed'
+            },
+            {
+                user: userId,
+                title: "📈 In Progress Goal",
+                description: "This shows you the 50% progress state.",
+                targetAmount: 10000,
+                currentAmount: 5000, 
+                type: 'Savings',
+                startDate: new Date(now.getFullYear(), now.getMonth(), 1),
+                endDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+                status: 'active'
+            }
+        ]);
+
+        console.log(`Successfully seeded ${entries.length} expenses, ${incomes.length} incomes, and 2 pre-set challenges for ${email}`);
+        console.log('--- EXPECTED OUTPUT GENERATED ---');
         process.exit(0);
     } catch (error) {
         console.error('Error seeding user:', error);

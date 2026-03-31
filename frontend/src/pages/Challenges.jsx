@@ -155,7 +155,7 @@ const Challenges = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {challenges.length > 0 ? (
                     challenges.map(c => {
-                        const progress = c.type === 'Savings' ? Math.min(100, Math.round((c.currentAmount / c.targetAmount) * 100)) : 0;
+                        const progress = c.type === 'Savings' ? Math.max(0, Math.min(100, Math.round((c.currentAmount / c.targetAmount) * 100))) : 0;
                         const statusColors = {
                             active: 'bg-blue-100 text-blue-600',
                             completed: 'bg-green-100 text-green-600',

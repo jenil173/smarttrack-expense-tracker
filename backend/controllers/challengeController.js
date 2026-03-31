@@ -1,5 +1,7 @@
 const Challenge = require('../models/Challenge');
 const Expense = require('../models/Expense');
+const Income = require('../models/Income');
+const mongoose = require('mongoose');
 
 // @desc    Get all challenges for a user
 // @route   GET /api/challenges
@@ -24,23 +26,28 @@ const createChallenge = async (req, res) => {
             return res.status(400).json({ message: 'Please provide title and end date' });
         }
 
+        // Normalize Start Date to 00:00:00 to be inclusive of the entire day
+        const normalizedStart = startDate ? new Date(startDate) : new Date();
+        normalizedStart.setHours(0, 0, 0, 0);
+
         const challenge = await Challenge.create({
             user: req.user.id,
             title,
             description,
             type,
             targetAmount,
-            startDate: startDate || Date.now(), // Use provided startDate or default to now
+            startDate: normalizedStart,
             endDate
         });
 
         res.status(201).json(challenge);
     } catch (error) {
+        console.error('Create Challenge Error:', error);
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 
-// @desc    Update challenge progress (can be called periodically or manually)
+// @desc    Update challenge progress
 // @route   PUT /api/challenges/:id/progress
 // @access  Private
 const updateChallengeProgress = async (req, res) => {
@@ -55,51 +62,52 @@ const updateChallengeProgress = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
-        // Logic to calculate progress based on type
+        const userId = new mongoose.Types.ObjectId(req.user.id);
+        const startFilter = new Date(challenge.startDate);
+        const now = new Date();
+
+        // Logic to calculate progress
         if (challenge.type === 'Savings') {
             const expenses = await Expense.find({
-                user: req.user.id,
-                date: { $gte: challenge.startDate, $lte: new Date() }
+                user: userId,
+                date: { $gte: startFilter, $lte: now }
             });
-            const Income = require('../models/Income');
             const incomes = await Income.find({
-                user: req.user.id,
-                date: { $gte: challenge.startDate, $lte: new Date() }
+                user: userId,
+                date: { $gte: startFilter, $lte: now }
             });
 
             const totalSpent = expenses.reduce((a, b) => a + b.amount, 0);
             const totalEarned = incomes.reduce((a, b) => a + b.amount, 0);
             challenge.currentAmount = totalEarned - totalSpent;
+
+            console.log(`Challenge ${challenge.title}: Earned=${totalEarned}, Spent=${totalSpent}, Result=${challenge.currentAmount}`);
         } else if (challenge.type === 'No Shopping') {
             const shoppingExpenses = await Expense.find({
-                user: req.user.id,
+                user: userId,
                 category: 'Shopping',
-                date: { $gte: challenge.startDate, $lte: new Date() }
+                date: { $gte: startFilter, $lte: now }
             });
             if (shoppingExpenses.length > 0) {
                 challenge.status = 'failed';
             }
         }
 
-        // Check completion status
-        const now = new Date();
+        // Status Management
         const endOfDay = new Date(challenge.endDate);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // Logic to update status
         if (now <= endOfDay) {
-            // Still in progress - can become 'active' or 'completed'
             if (challenge.type === 'Savings' && challenge.currentAmount >= challenge.targetAmount) {
                 challenge.status = 'completed';
             } else {
-                challenge.status = 'active'; // This lets 'FAILED' records recover if the user clicks Update
+                challenge.status = 'active'; // Recover from premature failure if still within timeframe
             }
         } else {
-            // Time has definitely passed
             if (challenge.type === 'Savings' && challenge.currentAmount < challenge.targetAmount) {
                 challenge.status = 'failed';
             } else {
-                challenge.status = 'completed'; // No Shopping success
+                challenge.status = 'completed';
             }
         }
 
