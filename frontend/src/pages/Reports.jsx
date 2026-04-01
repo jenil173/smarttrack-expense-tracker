@@ -48,11 +48,16 @@ const Reports = () => {
         }
     };
 
+    const [recipients, setRecipients] = useState('');
+
     const handleEmailPDF = async () => {
         setActionLoading(true);
         try {
-            await api.post('/reports/email-report');
-            showMessage('Report emailed successfully!');
+            // Split by comma and trim whitespace
+            const emailList = recipients.split(',').map(e => e.trim()).filter(e => e !== '');
+            await api.post('/reports/email-report', { recipients: emailList });
+            showMessage(emailList.length > 0 ? `Report sent to ${emailList.join(', ')}` : 'Report sent to your email!');
+            setRecipients(''); // Clear after success
         } catch (error) {
             showMessage('Failed to email report.');
         } finally {
@@ -126,6 +131,19 @@ const Reports = () => {
                 {/* Export Actions Box */}
                 <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 p-8 rounded-2xl shadow-sm border border-primary/10 flex flex-col justify-center">
                     <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Export Options</h3>
+                    
+                    {/* Add custom recipients input */}
+                    <div className="mb-4">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Send to recipients (Optional)</label>
+                        <input 
+                            type="text"
+                            placeholder="friend@example.com, boss@company.com"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-primary text-sm shadow-inner"
+                            value={recipients}
+                            onChange={(e) => setRecipients(e.target.value)}
+                        />
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
                             onClick={handleDownloadPDF} disabled={actionLoading}

@@ -132,8 +132,11 @@ const emailReport = async (req, res) => {
             </div>
         `;
 
+        const { recipients } = req.body;
+        const recipientList = recipients && recipients.length > 0 ? recipients : user.email;
+
         const sent = await sendEmail({
-            to: user.email,
+            to: recipientList,
             subject: 'SmartTrack - Your Financial Report',
             html: htmlContent,
             attachments: [
@@ -146,10 +149,10 @@ const emailReport = async (req, res) => {
         });
 
         if (sent) {
-            console.log(`[SUCCESS] Financial report emailed successfully to: ${user.email}`);
+            console.log(`[SUCCESS] Financial report emailed successfully to: ${recipientList}`);
             res.status(200).json({ message: 'Report sent to your email successfully.' });
         } else {
-            console.warn(`[WARNING] Email dispatch returned false for: ${user.email}`);
+            console.warn(`[WARNING] Email dispatch returned false for: ${recipientList}`);
             res.status(500).json({ message: 'Could not send email. Please check server logs.' });
         }
     } catch (error) {

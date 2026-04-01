@@ -229,9 +229,21 @@ const AdminPanel = () => {
                                             </span>
                                         </td>
                                         <td className="px-8 py-5 text-gray-400 font-bold">{new Date(u.createdAt).toLocaleDateString()}</td>
-                                        <td className="px-8 py-5 flex justify-end space-x-3" onClick={(e) => e.stopPropagation()}>
-                                            <button onClick={() => handleRoleChange(u._id, u.role, u.email)} className="p-2.5 text-gray-400 hover:bg-white hover:text-blue-500 rounded-xl shadow-sm transition-all border border-transparent hover:border-blue-100"><Edit size={16} /></button>
-                                            <button onClick={() => handleDeleteUser(u._id)} className="p-2.5 text-gray-400 hover:bg-white hover:text-red-500 rounded-xl shadow-sm transition-all border border-transparent hover:border-red-100"><Trash2 size={16} /></button>
+                                        <td className="px-8 py-5 flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
+                                            <button 
+                                                onClick={() => handleRoleChange(u._id, u.role, u.email)} 
+                                                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-[10px] font-black transition-all border ${u.role === 'admin' ? 'text-orange-600 border-orange-100 hover:bg-orange-50' : 'text-purple-600 border-purple-100 hover:bg-purple-50'}`}
+                                                title={u.role === 'admin' ? "Demote to User" : "Promote to Admin"}
+                                            >
+                                                <span>{u.role === 'admin' ? 'DEMOTE' : 'PROMOTE'}</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteUser(u._id)} 
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                title="Delete User"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -378,12 +390,32 @@ const AdminPanel = () => {
                             </div>
                         </div>
 
-                        <button 
-                            onClick={() => setSelectedUser(null)}
-                            className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all shadow-lg active:scale-95"
-                        >
-                            Close Details
-                        </button>
+                        <div className="flex flex-col space-y-3">
+                             <button 
+                                onClick={() => {
+                                    handleRoleChange(selectedUser._id, selectedUser.role, selectedUser.email);
+                                    setSelectedUser(prev => ({ ...prev, role: prev.role === 'admin' ? 'user' : 'admin' }));
+                                }}
+                                className={`w-full py-4 rounded-2xl font-black transition-all shadow-md active:scale-95 border-2 ${selectedUser.role === 'admin' ? 'border-orange-100 text-orange-600 hover:bg-orange-50' : 'border-purple-100 text-purple-600 hover:bg-purple-50'}`}
+                            >
+                                {selectedUser.role === 'admin' ? 'Demote to Standard User' : 'Promote to Admin'}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    handleDeleteUser(selectedUser._id);
+                                    setSelectedUser(null);
+                                }}
+                                className="w-full bg-red-50 text-red-600 font-black py-4 rounded-2xl hover:bg-red-100 transition-all shadow-sm active:scale-95 border-2 border-red-100"
+                            >
+                                Delete Account Permanently
+                            </button>
+                            <button 
+                                onClick={() => setSelectedUser(null)}
+                                className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all shadow-lg active:scale-95"
+                            >
+                                Close Details
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
