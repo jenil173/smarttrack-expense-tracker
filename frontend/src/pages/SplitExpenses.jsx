@@ -21,7 +21,7 @@ const SplitExpenses = () => {
     const fetchSplits = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/api/splits');
+            const res = await api.get('/splits');
             setSplits(res.data);
         } catch (error) {
             toast.error('Failed to fetch shared expenses');
@@ -33,7 +33,7 @@ const SplitExpenses = () => {
     const handleSettle = async (splitId, participantId) => {
         if (!window.confirm("Mark this share as settled?")) return;
         try {
-            await api.put(`/api/splits/${splitId}/settle`, { participantId });
+            await api.put(`/splits/${splitId}/settle`, { participantId });
             toast.success('Balance settled');
             fetchSplits();
         } catch (error) {

@@ -29,7 +29,7 @@ const Dashboard = () => {
                 api.get('/expenses/summary'),
                 api.get('/dashboard/analytics'),
                 api.get('/dashboard/insights'),
-                api.get('/api/splits') // New endpoint
+                api.get('/splits') // Corrected endpoint
             ]);
 
             setSummary(summaryRes.data);

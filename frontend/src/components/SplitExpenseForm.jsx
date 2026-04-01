@@ -53,7 +53,7 @@ const SplitExpenseForm = ({ onSuccess }) => {
         }
 
         try {
-            await api.post('/api/splits', {
+            await api.post('/splits', {
                 totalAmount: parseFloat(totalAmount),
                 description,
                 participants: participants.map(p => ({
