@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
     const [summary, setSummary] = useState(null);
-    const [analytics, setAnalytics] = useState(null);
+    const [splits, setSplits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [editingBudget, setEditingBudget] = useState(false);
@@ -24,15 +24,17 @@ const Dashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [summaryRes, analyticsRes, insightsRes] = await Promise.all([
+            const [summaryRes, analyticsRes, insightsRes, splitsRes] = await Promise.all([
                 api.get('/expenses/summary'),
                 api.get('/dashboard/analytics'),
-                api.get('/dashboard/insights')
+                api.get('/dashboard/insights'),
+                api.get('/api/splits') // New endpoint
             ]);
 
             setSummary(summaryRes.data);
             setAnalytics(analyticsRes.data);
             setInsights(insightsRes.data);
+            setSplits(splitsRes.data);
             setNewBudget(summaryRes.data.monthlyBudget || '');
         } catch (err) {
             setError('Failed to fetch dashboard data');
@@ -110,6 +112,35 @@ const Dashboard = () => {
                 savings={summary?.savings}
                 healthScore={summary?.healthScore}
             />
+
+            {/* Split Balances Mini Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {(() => {
+                    let youOwe = 0;
+                    let owedToYou = 0;
+                    splits.forEach(split => {
+                        if (split.payer._id === user.id) {
+                            split.participants.forEach(p => { if (p.status === 'pending') owedToYou += p.amount; });
+                        } else {
+                            const myShare = split.participants.find(p => p.user?._id === user.id || p.email === user.email);
+                            if (myShare && myShare.status === 'pending') youOwe += myShare.amount;
+                        }
+                    });
+                    return (
+                        <>
+                            <Link to="/splits" className="bg-white p-4 rounded-2xl border border-red-100 shadow-sm flex flex-col hover:bg-red-50 transition-all">
+                                <span className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">You Owe</span>
+                                <span className="text-lg font-black text-gray-800">₹{youOwe.toFixed(0)}</span>
+                            </Link>
+                            <Link to="/splits" className="bg-white p-4 rounded-2xl border border-green-100 shadow-sm flex flex-col hover:bg-green-50 transition-all">
+                                <span className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">They Owe You</span>
+                                <span className="text-lg font-black text-gray-800">₹{owedToYou.toFixed(0)}</span>
+                            </Link>
+                        </>
+                    );
+                })()}
+                <div className="hidden md:block col-span-2"></div>
+            </div>
 
             {/* Budget Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-md transition-shadow">

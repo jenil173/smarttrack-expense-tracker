@@ -52,11 +52,12 @@ app.use(express.json({ limit: '10mb' })); // Body parser with limit
 const authRoutes = require('./routes/authRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const incomeRoutes = require('./routes/incomeRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/challenges', require('./routes/challengeRoutes'));
+app.use('/api/splits', require('./routes/splitRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 const dashboardRoutes = require('./routes/dashboardRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const challengeRoutes = require('./routes/challengeRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);

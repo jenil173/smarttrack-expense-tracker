@@ -9,10 +9,11 @@ import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import IncomePage from './pages/Income';
 import Reports from './pages/Reports';
+import Challenges from './pages/Challenges';
+import SplitExpenses from './pages/SplitExpenses';
 import AdminPanel from './pages/AdminPanel';
 
 import Landing from './pages/Landing';
-import Challenges from './pages/Challenges';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -54,6 +55,10 @@ function App() {
         {
             path: "/expenses",
             element: <ProtectedRoute><Expenses /></ProtectedRoute>
+        },
+        {
+            path: "/splits",
+            element: <ProtectedRoute><SplitExpenses /></ProtectedRoute>
         },
         {
             path: "/income",

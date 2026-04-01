@@ -40,6 +40,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <TrendingUp size={20} />
                     <span className="font-medium">Income</span>
                 </NavLink>
+                <NavLink to="/splits" onClick={onClose} className={navClasses}>
+                    <Users size={20} />
+                    <span className="font-medium">Split Expenses</span>
+                </NavLink>
 
                 <NavLink to="/reports" onClick={onClose} className={navClasses}>
                     <BarChart size={20} />
