@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
     const [summary, setSummary] = useState(null);
+    const [analytics, setAnalytics] = useState(null);
     const [splits, setSplits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
