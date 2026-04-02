@@ -239,10 +239,42 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
+// @desc    Search for users by name or email
+// @route   GET /api/auth/search
+// @access  Private
+const searchUsers = async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query || query.length < 2) {
+            return res.status(200).json([]);
+        }
+
+        // Search by name or email, case insensitive, exclude current user
+        const users = await User.find({
+            $and: [
+                { _id: { $ne: req.user._id } },
+                {
+                    $or: [
+                        { name: { $regex: query, $options: 'i' } },
+                        { email: { $regex: query, $options: 'i' } }
+                    ]
+                }
+            ]
+        })
+        .select('name email')
+        .limit(10);
+
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
     updateUserProfile,
-    verifyEmail
+    verifyEmail,
+    searchUsers
 };

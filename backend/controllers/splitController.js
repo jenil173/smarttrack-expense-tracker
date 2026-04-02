@@ -14,10 +14,10 @@ const createSplit = async (req, res) => {
             return res.status(400).json({ message: 'Please provide totalAmount, description, and at least one participant' });
         }
 
-        // Validate split amounts match total
+        // Validate split amounts (sum of other participants shouldn't exceed total)
         const splitSum = participants.reduce((acc, p) => acc + Number(p.amount), 0);
-        if (Math.abs(splitSum - totalAmount) > 0.01) {
-            return res.status(400).json({ message: `Split amounts (${splitSum}) must equal total amount (${totalAmount})` });
+        if (splitSum > totalAmount + 0.01) {
+            return res.status(400).json({ message: `Split amounts (${splitSum}) cannot exceed total amount (${totalAmount})` });
         }
 
         // Process participants and detect SmartTrack users

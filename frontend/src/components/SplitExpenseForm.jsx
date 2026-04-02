@@ -11,6 +11,31 @@ const SplitExpenseForm = ({ onSuccess }) => {
     ]);
     const [loading, setLoading] = useState(false);
     const [splitType, setSplitType] = useState('equal'); // equal, manual
+    const [searchResults, setSearchResults] = useState([]);
+    const [activeSearchIndex, setActiveSearchIndex] = useState(null);
+
+    const handleSearch = async (query, index) => {
+        handleParticipantChange(index, 'email', query);
+        if (query.length < 2) {
+            setSearchResults([]);
+            setActiveSearchIndex(null);
+            return;
+        }
+
+        try {
+            const res = await api.get(`/auth/search?q=${query}`);
+            setSearchResults(res.data);
+            setActiveSearchIndex(index);
+        } catch (error) {
+            console.error('Search failed', error);
+        }
+    };
+
+    const selectUser = (user, index) => {
+        handleParticipantChange(index, 'email', user.email);
+        setSearchResults([]);
+        setActiveSearchIndex(null);
+    };
 
     const handleAddParticipant = () => {
         setParticipants([...participants, { email: '', amount: '' }]);
@@ -29,7 +54,10 @@ const SplitExpenseForm = ({ onSuccess }) => {
     };
 
     const calculateEqualSplits = () => {
-        if (!totalAmount || isNaN(totalAmount)) return;
+        if (!totalAmount || isNaN(totalAmount) || parseFloat(totalAmount) <= 0) {
+            toast.error('Please enter a valid total amount first');
+            return;
+        }
         const count = participants.length + 1; // Participants + Payer
         const splitAmount = (parseFloat(totalAmount) / count).toFixed(2);
         
@@ -39,6 +67,7 @@ const SplitExpenseForm = ({ onSuccess }) => {
         }));
         setParticipants(newParticipants);
         setSplitType('equal');
+        toast.success(`Split equally: ${splitAmount} each`);
     };
 
     const handleSubmit = async (e) => {
@@ -126,11 +155,27 @@ const SplitExpenseForm = ({ onSuccess }) => {
                                 <input 
                                     type="email" 
                                     required
-                                    placeholder="Friend's email"
+                                    placeholder="Friend's email or name"
                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-primary/10"
                                     value={p.email}
-                                    onChange={(e) => handleParticipantChange(idx, 'email', e.target.value)}
+                                    onChange={(e) => handleSearch(e.target.value, idx)}
+                                    autoComplete="off"
                                 />
+                                {activeSearchIndex === idx && searchResults.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        {searchResults.map((user) => (
+                                            <button
+                                                key={user._id}
+                                                type="button"
+                                                onClick={() => selectUser(user, idx)}
+                                                className="w-full px-4 py-3 text-left hover:bg-primary/5 transition-all border-b last:border-0 border-gray-50 flex flex-col"
+                                            >
+                                                <span className="text-xs font-black text-gray-800">{user.name || 'Anonymous'}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold">{user.email}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="w-32 relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
