@@ -21,13 +21,13 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     return (
         <div className={`h-screen w-64 bg-white border-r border-gray-200 flex flex-col fixed left-0 top-0 z-40 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-            <div className="p-6">
+            <div className="p-6 shrink-0">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
                     SmartTrack
                 </h1>
             </div>
 
-            <div className="flex-1 px-4 space-y-2 mt-4">
+            <div className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
                 <NavLink to="/dashboard" onClick={onClose} className={navClasses}>
                     <LayoutDashboard size={20} />
                     <span className="font-medium">Dashboard</span>

@@ -40,20 +40,29 @@ const IncomePage = () => {
 
     return (
         <Layout title="Income">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 lg:sticky lg:top-8 self-start">
+            <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+                {/* Left Pane - Entry Form */}
+                <div className="w-full lg:w-[380px] xl:w-[420px] h-full overflow-y-auto p-4 md:p-8 scrollbar-hide border-r border-gray-100 bg-white/50">
                     <IncomeForm onIncomeAdded={handleIncomeAdded} />
                 </div>
 
-                <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-gray-800 mb-6">Recent Income</h3>
-                    {loading ? (
-                        <div className="flex justify-center p-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                {/* Right Pane - Transaction List */}
+                <div className="flex-1 h-full overflow-y-auto p-4 md:p-8 text-center sm:text-left">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-black text-gray-800 tracking-tight">Recent Income</h3>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Track your earnings and inflows</p>
                         </div>
-                    ) : (
-                        <IncomeList incomes={incomes} onDelete={handleDelete} />
-                    )}
+                        
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                                <p className="text-sm font-black text-gray-400 uppercase tracking-widest">Loading records...</p>
+                            </div>
+                        ) : (
+                            <IncomeList incomes={incomes} onDelete={handleDelete} />
+                        )}
+                    </div>
                 </div>
             </div>
         </Layout>

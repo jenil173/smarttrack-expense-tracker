@@ -85,43 +85,45 @@ const SplitExpenses = () => {
 
     return (
         <Layout title="Smart Split Expenses">
-            {/* Header / Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="p-3 bg-red-50 text-red-500 rounded-2xl">
-                            <ArrowUpRight size={24} />
+            <div className="h-full overflow-y-auto p-4 md:p-8">
+                <div className="max-w-7xl mx-auto">
+                    {/* Header / Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="p-3 bg-red-50 text-red-500 rounded-2xl">
+                                    <ArrowUpRight size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total You Owe</span>
+                            </div>
+                            <h3 className="text-3xl font-black text-gray-800">{formatINR(youOwe)}</h3>
                         </div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total You Owe</span>
-                    </div>
-                    <h3 className="text-3xl font-black text-gray-800">{formatINR(youOwe)}</h3>
-                </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="p-3 bg-green-50 text-green-500 rounded-2xl">
-                            <ArrowDownLeft size={24} />
+                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="p-3 bg-green-50 text-green-500 rounded-2xl">
+                                    <ArrowDownLeft size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Owed to You</span>
+                            </div>
+                            <h3 className="text-3xl font-black text-gray-800">{formatINR(owedToYou)}</h3>
                         </div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Owed to You</span>
+
+                        <button 
+                            onClick={() => setShowForm(true)}
+                            className="bg-primary hover:bg-purple-600 text-white p-6 rounded-3xl shadow-lg transition-all flex flex-col items-center justify-center space-y-2 group"
+                        >
+                            <Plus size={32} className="group-hover:scale-110 transition-transform" />
+                            <span className="font-black uppercase tracking-widest text-xs">New Split</span>
+                        </button>
                     </div>
-                    <h3 className="text-3xl font-black text-gray-800">{formatINR(owedToYou)}</h3>
-                </div>
 
-                <button 
-                    onClick={() => setShowForm(true)}
-                    className="bg-primary hover:bg-purple-600 text-white p-6 rounded-3xl shadow-lg transition-all flex flex-col items-center justify-center space-y-2 group"
-                >
-                    <Plus size={32} className="group-hover:scale-110 transition-transform" />
-                    <span className="font-black uppercase tracking-widest text-xs">New Split</span>
-                </button>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex space-x-2 mb-8 bg-gray-100/50 p-1.5 rounded-2xl w-fit">
-                <button onClick={() => setFilter('all')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'all' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>All Splits</button>
-                <button onClick={() => setFilter('paid_by_me')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'paid_by_me' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Paid by Me</button>
-                <button onClick={() => setFilter('shared_with_me')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'shared_with_me' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Shared with Me</button>
-            </div>
+                    {/* Filter Tabs */}
+                    <div className="flex space-x-2 mb-8 bg-gray-100/50 p-1.5 rounded-2xl w-fit">
+                        <button onClick={() => setFilter('all')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'all' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>All Splits</button>
+                        <button onClick={() => setFilter('paid_by_me')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'paid_by_me' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Paid by Me</button>
+                        <button onClick={() => setFilter('shared_with_me')} className={`px-6 py-2.5 rounded-xl font-bold transition-all text-sm ${filter === 'shared_with_me' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Shared with Me</button>
+                    </div>
 
             {/* List */}
             <div className="space-y-4">
@@ -219,6 +221,8 @@ const SplitExpenses = () => {
                     </div>
                 </div>
             )}
+                </div>
+            </div>
         </Layout>
     );
 };
