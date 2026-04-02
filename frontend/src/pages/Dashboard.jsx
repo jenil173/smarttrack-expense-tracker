@@ -120,10 +120,10 @@ const Dashboard = () => {
                     let youOwe = 0;
                     let owedToYou = 0;
                     splits.forEach(split => {
-                        if (split.payer._id === user.id) {
+                        if (split.payer._id === user._id) {
                             split.participants.forEach(p => { if (p.status === 'pending') owedToYou += p.amount; });
                         } else {
-                            const myShare = split.participants.find(p => p.user?._id === user.id || p.email === user.email);
+                            const myShare = split.participants.find(p => p.user?._id === user._id || p.email === user.email);
                             if (myShare && myShare.status === 'pending') youOwe += myShare.amount;
                         }
                     });

@@ -46,7 +46,7 @@ const SplitExpenses = () => {
         let owedToYou = 0;
 
         splits.forEach(split => {
-            if (split.payer._id === user.id) {
+            if (split.payer._id === user._id) {
                 // You paid, others might owe you
                 split.participants.forEach(p => {
                     if (p.status === 'pending') {
@@ -55,7 +55,7 @@ const SplitExpenses = () => {
                 });
             } else {
                 // Someone else paid, you might owe them
-                const myShare = split.participants.find(p => p.user?._id === user.id || p.email === user.email);
+                const myShare = split.participants.find(p => p.user?._id === user._id || p.email === user.email);
                 if (myShare && myShare.status === 'pending') {
                     youOwe += myShare.amount;
                 }
@@ -68,8 +68,8 @@ const SplitExpenses = () => {
     const { youOwe, owedToYou } = calculateBalances();
 
     const filteredSplits = splits.filter(s => {
-        if (filter === 'paid_by_me') return s.payer._id === user.id;
-        if (filter === 'shared_with_me') return s.payer._id !== user.id;
+        if (filter === 'paid_by_me') return s.payer._id === user._id;
+        if (filter === 'shared_with_me') return s.payer._id !== user._id;
         return true;
     });
 
@@ -133,7 +133,7 @@ const SplitExpenses = () => {
                     </div>
                 ) : (
                     filteredSplits.map(split => {
-                        const amIPayer = split.payer._id === user.id;
+                        const amIPayer = split.payer._id === user._id;
                         return (
                             <div key={split._id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:border-primary/20 transition-all">
                                 <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -164,7 +164,7 @@ const SplitExpenses = () => {
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Participants & Status</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {split.participants.map(p => {
-                                            const isMe = p.user?._id === user.id || p.email === user.email;
+                                            const isMe = p.user?._id === user._id || p.email === user.email;
                                             const canISettle = (amIPayer && !isMe) || (isMe && p.status === 'pending');
                                             
                                             return (

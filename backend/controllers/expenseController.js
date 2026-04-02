@@ -210,22 +210,37 @@ const getSummary = async (req, res) => {
         const User = require('../models/User');
         const user = await User.findById(req.user.id);
         const monthlyBudget = user ? user.monthlyBudget : 0;
-        const thisMonthStr = new Date().toLocaleString('default', { month: 'short', year: 'numeric' });
+        const now = new Date();
+        const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         const monthlyData = {};
         const categoryData = {};
         expenses.forEach(exp => {
-            const mY = new Date(exp.date).toLocaleString('default', { month: 'short', year: 'numeric' });
-            if (!monthlyData[mY]) monthlyData[mY] = { expense: 0, income: 0, month: mY };
-            monthlyData[mY].expense += exp.amount;
+            const d = new Date(exp.date);
+            const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyData[mKey]) {
+                monthlyData[mKey] = { 
+                    expense: 0, 
+                    income: 0, 
+                    month: d.toLocaleString('default', { month: 'short', year: 'numeric' }) 
+                };
+            }
+            monthlyData[mKey].expense += exp.amount;
             if (!categoryData[exp.category]) categoryData[exp.category] = 0;
             categoryData[exp.category] += exp.amount;
         });
         incomes.forEach(inc => {
-            const mY = new Date(inc.date).toLocaleString('default', { month: 'short', year: 'numeric' });
-            if (!monthlyData[mY]) monthlyData[mY] = { expense: 0, income: 0, month: mY };
-            monthlyData[mY].income += inc.amount;
+            const d = new Date(inc.date);
+            const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyData[mKey]) {
+                monthlyData[mKey] = { 
+                    expense: 0, 
+                    income: 0, 
+                    month: d.toLocaleString('default', { month: 'short', year: 'numeric' }) 
+                };
+            }
+            monthlyData[mKey].income += inc.amount;
         });
-        const thisMonthData = monthlyData[thisMonthStr] || { income: 0, expense: 0 };
+        const thisMonthData = monthlyData[thisMonthKey] || { income: 0, expense: 0 };
         const currentMonthSavings = thisMonthData.income - thisMonthData.expense;
 
         // Get Previous Month data for comparison
