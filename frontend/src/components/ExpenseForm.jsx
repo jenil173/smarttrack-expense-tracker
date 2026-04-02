@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { debounce } from 'lodash';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Sparkles, Wand2, Plus, FileText } from 'lucide-react';
 
 const ExpenseForm = ({ onExpenseAdded }) => {
     const { currencySymbol } = useContext(AuthContext);
@@ -161,25 +161,49 @@ const ExpenseForm = ({ onExpenseAdded }) => {
             )}
 
             {/* Manual Form */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Manual Entry</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 transition-all hover:shadow-md group">
+                <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center">
+                    <FileText className="mr-2 text-primary opacity-50 group-hover:opacity-100 transition-opacity" size={20} />
+                    Manual Entry
+                </h3>
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input required type="text" className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={title} onChange={(e) => setTitle(e.target.value)} />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Title</label>
+                        <input 
+                            required 
+                            type="text" 
+                            placeholder="e.g., Weekly Groceries"
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)} 
+                        />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2.5 text-gray-400">₹</span>
-                                <input required type="number" min="0" step="0.01" className="w-full pl-8 pr-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Amount</label>
+                            <div className="relative group/amount">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold group-focus-within/amount:text-primary transition-colors">₹</span>
+                                <input 
+                                    required 
+                                    type="number" 
+                                    min="0" 
+                                    step="0.01" 
+                                    placeholder="0.00"
+                                    className="w-full pl-10 pr-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300" 
+                                    value={amount} 
+                                    onChange={(e) => setAmount(e.target.value)} 
+                                />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select required className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={category} onChange={(e) => setCategory(e.target.value)}>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category</label>
+                            <select 
+                                required 
+                                className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer" 
+                                value={category} 
+                                onChange={(e) => setCategory(e.target.value)}
+                            >
                                 <option value="" disabled>Select Category</option>
                                 {defaultCategories.map(cat => (
                                     <option key={cat} value={cat}>{cat}</option>
@@ -189,40 +213,62 @@ const ExpenseForm = ({ onExpenseAdded }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input type="date" className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={date} onChange={(e) => setDate(e.target.value)} />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date</label>
+                        <input 
+                            type="date" 
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all font-bold text-gray-700 cursor-pointer" 
+                            value={date} 
+                            onChange={(e) => setDate(e.target.value)} 
+                        />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Note (Optional)</label>
-                        <textarea className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" rows="2" value={note} onChange={(e) => setNote(e.target.value)}></textarea>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Note (Optional)</label>
+                        <textarea 
+                            placeholder="Add some details..."
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300 resize-none" 
+                            rows="2" 
+                            value={note} 
+                            onChange={(e) => setNote(e.target.value)}
+                        ></textarea>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">How do you feel about this expense?</label>
-                        <div className="flex space-x-4">
-                            {['Happy', 'Neutral', 'Stressed'].map((m) => (
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">How did you feel about this expense?</label>
+                        <div className="flex gap-3">
+                            {[
+                                { id: 'Happy', label: 'Happy', emoji: '😊', color: 'green' },
+                                { id: 'Neutral', label: 'Neutral', emoji: '😐', color: 'blue' },
+                                { id: 'Stressed', label: 'Stressed', emoji: '😰', color: 'red' }
+                            ].map((m) => (
                                 <button
-                                    key={m}
+                                    key={m.id}
                                     type="button"
-                                    onClick={() => setMood(m)}
-                                    className={`flex-1 py-2 rounded-xl border-2 transition-all ${
-                                        mood === m 
-                                        ? 'border-primary bg-primary/10 text-primary font-bold' 
-                                        : 'border-gray-100 bg-gray-50 text-gray-500'
+                                    onClick={() => setMood(m.id)}
+                                    className={`flex-1 py-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${
+                                        mood === m.id 
+                                        ? `border-primary bg-primary/5 text-primary scale-[1.02] shadow-sm` 
+                                        : 'border-gray-50 bg-gray-50/50 text-gray-400 hover:border-gray-200'
                                     }`}
                                 >
-                                    {m === 'Happy' ? '😊 Happy' : m === 'Stressed' ? '😰 Stressed' : '😐 Neutral'}
+                                    <span className="text-lg">{m.emoji}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-tighter">{m.label}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    <button type="submit" disabled={loading} className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-70 flex justify-center items-center">
+                    <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="w-full bg-gray-900 hover:bg-black text-white font-black py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl disabled:opacity-70 flex justify-center items-center gap-2 mt-4 active:scale-95"
+                    >
                         {loading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        ) : null}
-                        {loading ? 'Adding Expense...' : 'Add Expense'}
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        ) : (
+                            <Plus size={20} />
+                        )}
+                        {loading ? 'Processing...' : 'Save Expense'}
                     </button>
                 </form>
             </div>

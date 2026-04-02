@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import api from '../services/api';
 import { debounce } from 'lodash';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Sparkles, Wand2, Plus, FileText } from 'lucide-react';
 
 const IncomeForm = ({ onIncomeAdded }) => {
     const [title, setTitle] = useState('');
@@ -146,34 +146,49 @@ const IncomeForm = ({ onIncomeAdded }) => {
             )}
 
             {/* Manual Form */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Add Income</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 transition-all hover:shadow-md group">
+                <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center">
+                    <FileText className="mr-2 text-green-600 opacity-50 group-hover:opacity-100 transition-opacity" size={20} />
+                    Add Income
+                </h3>
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input required type="text" className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={title} onChange={(e) => setTitle(e.target.value)} />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Title</label>
+                        <input 
+                            required 
+                            type="text" 
+                            placeholder="e.g., Monthly Salary"
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)} 
+                        />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                            <div className="relative flex-1">
-                                <span className="absolute left-3 top-2.5 text-gray-400 bg-white group-focus-within:text-primary transition-colors">₹</span>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Amount</label>
+                            <div className="relative group/amount">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold group-focus-within/amount:text-green-600 transition-colors">₹</span>
                                 <input 
                                     required 
                                     type="number" 
                                     min="0" 
                                     step="0.01" 
-                                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold text-gray-700" 
+                                    placeholder="0.00"
+                                    className="w-full pl-10 pr-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300" 
                                     value={amount} 
                                     onChange={(e) => setAmount(e.target.value)} 
-                                    placeholder="0.00"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
-                            <select required className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={source} onChange={(e) => setSource(e.target.value)}>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Source</label>
+                            <select 
+                                required 
+                                className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/20 outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer" 
+                                value={source} 
+                                onChange={(e) => setSource(e.target.value)}
+                            >
                                 <option value="" disabled>Select Source</option>
                                 {defaultSources.map(src => (
                                     <option key={src} value={src}>{src}</option>
@@ -183,20 +198,37 @@ const IncomeForm = ({ onIncomeAdded }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input type="date" className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" value={date} onChange={(e) => setDate(e.target.value)} />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date</label>
+                        <input 
+                            type="date" 
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/20 outline-none transition-all font-bold text-gray-700 cursor-pointer" 
+                            value={date} 
+                            onChange={(e) => setDate(e.target.value)} 
+                        />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Note (Optional)</label>
-                        <textarea className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary outline-none" rows="2" value={note} onChange={(e) => setNote(e.target.value)}></textarea>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Note (Optional)</label>
+                        <textarea 
+                            placeholder="Add some details..."
+                            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/20 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300 resize-none" 
+                            rows="2" 
+                            value={note} 
+                            onChange={(e) => setNote(e.target.value)}
+                        ></textarea>
                     </div>
 
-                    <button type="submit" disabled={loading} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-70 flex justify-center items-center">
+                    <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl disabled:opacity-70 flex justify-center items-center gap-2 mt-4 active:scale-95"
+                    >
                         {loading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        ) : null}
-                        {loading ? 'Adding Income...' : 'Add Income'}
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        ) : (
+                            <Plus size={20} />
+                        )}
+                        {loading ? 'Processing...' : 'Save Income'}
                     </button>
                 </form>
             </div>
