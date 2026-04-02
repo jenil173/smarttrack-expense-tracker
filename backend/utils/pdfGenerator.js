@@ -16,7 +16,7 @@ const formatCurrencySymbol = (amount) => {
 const generatePDFReport = async (user, summaryData, res = null) => {
     return new Promise((resolve, reject) => {
         try {
-            const doc = new PDFDocument({ margin: 50, size: 'A4' });
+            const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
             let buffers = [];
 
             if (res) {

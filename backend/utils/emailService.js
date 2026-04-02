@@ -6,23 +6,29 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
         // For project demonstration without real credentials, using Ethereal or standard mock logging
         // We will try standard gmail but fallback to logging if credentials are missing.
 
-        if (!process.env.EMAIL_USER || process.env.EMAIL_USER.includes('your-email') || !process.env.EMAIL_PASS || process.env.EMAIL_PASS.includes('your-app-password')) {
-            console.warn("⚠️ EMAIL ERROR: Placeholder credentials detected in .env. Please set up a Gmail App Password.");
+        const emailUser = process.env.EMAIL_USER;
+        const emailPass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s/g, '') : '';
+
+        if (!emailUser || emailUser.includes('your-email') || !emailPass || emailPass.includes('your-app-password')) {
+            console.warn("⚠️ EMAIL ERROR: Placeholder or missing credentials detected in .env. Please set up a Gmail App Password.");
             return false;
         }
 
+        // Using explicit host and port is more reliable than 'service: gmail' in many environments
         let transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true, // use TLS
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+                user: emailUser,
+                pass: emailPass
             }
         });
 
         console.log(`[EMAIL] Attempting to send email to: ${to} (Subject: ${subject})`);
         
         const info = await transporter.sendMail({
-            from: process.env.EMAIL_FROM || `"SmartTrack" <${process.env.EMAIL_USER || 'no-reply@smarttrack.com'}>`,
+            from: process.env.EMAIL_FROM || `"SmartTrack" <${emailUser}>`,
             to,
             subject,
             html,
@@ -34,7 +40,9 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
     } catch (error) {
         console.error(`[ERROR] Email Delivery Failed to ${to}:`, error.message);
         if (error.code === 'EAUTH') {
-            console.error('[ERROR] Gmail Authentication Failed. Please check if EMAIL_PASS is a valid App Password.');
+            console.error('[ERROR] Gmail Authentication Failed. This usually means the App Password is invalid or revoked.');
+        } else if (error.code === 'ESOCKET') {
+            console.error('[ERROR] Connection blocked. Ensure port 465 is open in your environment.');
         }
         return false;
     }

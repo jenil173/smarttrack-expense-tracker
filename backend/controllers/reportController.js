@@ -23,7 +23,8 @@ const getReportData = async (userId) => {
         healthScore = 100;
     }
 
-    const thisMonthStr = new Date().toLocaleString('default', { month: 'short', year: 'numeric' });
+    const now = new Date();
+    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     const categoryData = {};
     expenses.forEach(exp => {
@@ -33,17 +34,31 @@ const getReportData = async (userId) => {
 
     const monthlyData = {};
     expenses.forEach(exp => {
-        const monthYear = new Date(exp.date).toLocaleString('default', { month: 'short', year: 'numeric' });
-        if (!monthlyData[monthYear]) monthlyData[monthYear] = { expense: 0, income: 0, month: monthYear };
-        monthlyData[monthYear].expense += exp.amount;
+        const d = new Date(exp.date);
+        const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[mKey]) {
+            monthlyData[mKey] = { 
+                expense: 0, 
+                income: 0, 
+                month: d.toLocaleString('default', { month: 'short', year: 'numeric' }) 
+            };
+        }
+        monthlyData[mKey].expense += exp.amount;
     });
     incomes.forEach(inc => {
-        const monthYear = new Date(inc.date).toLocaleString('default', { month: 'short', year: 'numeric' });
-        if (!monthlyData[monthYear]) monthlyData[monthYear] = { expense: 0, income: 0, month: monthYear };
-        monthlyData[monthYear].income += inc.amount;
+        const d = new Date(inc.date);
+        const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[mKey]) {
+            monthlyData[mKey] = { 
+                expense: 0, 
+                income: 0, 
+                month: d.toLocaleString('default', { month: 'short', year: 'numeric' }) 
+            };
+        }
+        monthlyData[mKey].income += inc.amount;
     });
 
-    const thisMonthData = monthlyData[thisMonthStr] || { income: 0, expense: 0 };
+    const thisMonthData = monthlyData[thisMonthKey] || { income: 0, expense: 0 };
     const savings = thisMonthData.income - thisMonthData.expense;
 
     const user = await User.findById(userId);
