@@ -75,10 +75,18 @@ const SplitExpenseForm = ({ onSuccess }) => {
         setLoading(true);
 
         // Basic validation
-        if (participants.some(p => !p.email || !p.amount)) {
-            toast.error('All participant fields are required');
-            setLoading(false);
-            return;
+        const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        for (const p of participants) {
+            if (!p.email || !p.amount) {
+                toast.error('All participant fields are required');
+                setLoading(false);
+                return;
+            }
+            if (!emailRegex.test(p.email)) {
+                toast.error(`Invalid email format: ${p.email}`);
+                setLoading(false);
+                return;
+            }
         }
 
         try {
@@ -153,7 +161,7 @@ const SplitExpenseForm = ({ onSuccess }) => {
                             <div className="flex-1 relative">
                                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                                 <input 
-                                    type="email" 
+                                    type="text" 
                                     required
                                     placeholder="Friend's email or name"
                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-primary/10"
