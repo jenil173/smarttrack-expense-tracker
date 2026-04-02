@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import api from '../services/api';
-import { Download, Mail, FileText, FileSpreadsheet } from 'lucide-react';
+import { Download, Mail, FileText, FileSpreadsheet, Plus, X, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { formatCurrency as formatINR } from '../utils/currencyFormatter';
 
 const Reports = () => {
@@ -9,7 +10,10 @@ const Reports = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [message, setMessage] = useState('');
-
+    const [recipients, setRecipients] = useState([]); // Array of { email, name, isUser }
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [showResults, setShowResults] = useState(false);
     useEffect(() => {
         const fetchSummary = async () => {
             try {
@@ -48,16 +52,61 @@ const Reports = () => {
         }
     };
 
-    const [recipients, setRecipients] = useState('');
+    const handleSearch = async (val) => {
+        setSearchQuery(val);
+        if (val.length < 2) {
+            setSearchResults([]);
+            setShowResults(false);
+            return;
+        }
+        try {
+            const res = await api.get(`/auth/search?q=${val}`);
+            setSearchResults(res.data);
+            setShowResults(true);
+        } catch (error) {
+            console.error('Search failed', error);
+        }
+    };
+
+    const addRecipient = (email, name = null, isUser = false) => {
+        const cleanEmail = email.toLowerCase().trim();
+        if (!cleanEmail) return;
+        
+        // Basic email validation
+        const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        if (!emailRegex.test(cleanEmail)) {
+            toast.error('Invalid email format');
+            return;
+        }
+
+        // Duplicate check
+        if (recipients.some(r => r.email === cleanEmail)) {
+            toast.error('Email already added');
+            setSearchQuery('');
+            setShowResults(false);
+            return;
+        }
+
+        setRecipients([...recipients, { email: cleanEmail, name, isUser }]);
+        setSearchQuery('');
+        setSearchResults([]);
+        setShowResults(false);
+    };
+
+    const removeRecipient = (email) => {
+        setRecipients(recipients.filter(r => r.email !== email));
+    };
 
     const handleEmailPDF = async () => {
+        const emailList = recipients.map(r => r.email);
+        
+        // If list is empty, it will default to sending to current user in backend
+        
         setActionLoading(true);
         try {
-            // Split by comma and trim whitespace
-            const emailList = recipients.split(',').map(e => e.trim()).filter(e => e !== '');
             await api.post('/reports/email-report', { recipients: emailList });
             showMessage(emailList.length > 0 ? `Report sent to ${emailList.join(', ')}` : 'Report sent to your email!');
-            setRecipients(''); // Clear after success
+            setRecipients([]);
         } catch (error) {
             showMessage('Failed to email report.');
         } finally {
@@ -132,16 +181,66 @@ const Reports = () => {
                 <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 p-8 rounded-2xl shadow-sm border border-primary/10 flex flex-col justify-center">
                     <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Export Options</h3>
                     
-                    {/* Add custom recipients input */}
-                    <div className="mb-4">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Send to recipients (Optional)</label>
-                        <input 
-                            type="text"
-                            placeholder="friend@example.com, boss@company.com"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-primary text-sm shadow-inner"
-                            value={recipients}
-                            onChange={(e) => setRecipients(e.target.value)}
-                        />
+                    {/* Smart Recipients Input */}
+                    <div className="mb-6">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Send to Recipients (Optional)</label>
+                        
+                        {/* Selected Tags */}
+                        {recipients.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {recipients.map(r => (
+                                    <div key={r.email} className={`flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl border text-xs font-bold transition-all ${r.isUser ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-gray-50 border-gray-100 text-gray-500'}`}>
+                                        <span className="flex items-center gap-1.5">
+                                            {r.name || r.email.split('@')[0]}
+                                            {r.isUser && <CheckCircle2 size={12} className="text-indigo-500" title="Registered SmartTrack User" />}
+                                        </span>
+                                        <button 
+                                            onClick={() => removeRecipient(r.email)}
+                                            className="p-1 hover:bg-gray-200 rounded-lg transition-colors text-gray-400 hover:text-gray-600"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="relative">
+                            <input 
+                                type="text"
+                                placeholder="Type a name or email..."
+                                className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all text-sm font-bold bg-white/80 backdrop-blur-sm"
+                                value={searchQuery}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        addRecipient(searchQuery);
+                                    }
+                                }}
+                                autoComplete="off"
+                            />
+                            {showResults && searchResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {searchResults.map(res => (
+                                        <button
+                                            key={res._id}
+                                            onClick={() => addRecipient(res.email, res.name, true)}
+                                            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-primary/5 transition-all text-left border-b border-gray-50 last:border-0 group"
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-gray-800 group-hover:text-primary transition-colors">{res.name}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{res.email}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md uppercase tracking-tighter">Existing Account</span>
+                                                <Plus size={16} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
